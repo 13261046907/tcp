@@ -1,0 +1,46 @@
+server:
+  port: 8077
+
+logging:
+  level:
+    com.insectSituation.controller: INFO
+
+spring:
+  servlet:
+    multipart:
+      #不限制文件上传的大小，设置为-1
+      #单个文件的大小
+      max-file-size: 256MB
+      #单次请求的文件的总大小
+      max-request-size: 1024MB
+
+
+knife4j:
+  #是否开启Knife4j增强模式
+  enable: true
+  #设置密码
+  basic:
+    enable: true
+    username: test
+    password: 12313
+
+
+analyzer:
+  #通讯端口 (int类型)
+  deviceConnectPort: 8045
+  #图片上传位置
+  imageFilePath: D:\mnt\webJava\resources\static\
+  #推送地址
+  notifyUrlBase: http://localhost:8077
+  #图片上传推送
+  imageUploadNotifyUrl: /sdk/fileAddress
+  #登录帧
+  deviceLoginNotifyUrl: /sdk/login
+  #实时数据帧
+  deviceRealTimeDataNotifyUrl : /sdk/realTimeData
+  #控制指令应答帧
+  deviceCtrlResultNotifyUrl: /sdk/ctrl
+  #设备参数应答帧
+  deviceReceiveDataNotifyUrl: /sdk/receive
+  #数据透传应答帧
+  deviceTransDataNotifyUrl: /sdk/trans
