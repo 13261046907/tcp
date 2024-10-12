@@ -9,28 +9,28 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @Controller
 public class TcpController {
-        @Autowired
-        private NettyTcpServerHandler serverHandler;
-        @Autowired
-        private  MQTTConnect mqttConnect;
+    @Autowired
+    private NettyTcpServerHandler serverHandler;
+    @Autowired
+    private  MQTTConnect mqttConnect;
 
-        @GetMapping("/send/{code}/{msg}")
-        public R send(@PathVariable(value = "code") String code , @PathVariable(value = "msg") String msg) {
-                try {
-                        serverHandler.send(code,msg);
-                } catch (Exception e) {
-                        e.printStackTrace();
-                }
-                return R.ok();
+    @GetMapping("/send/{code}/{msg}")
+    public R send(@PathVariable(value = "code") String code , @PathVariable(value = "msg") String msg) {
+        try {
+            serverHandler.channelWrite(code,msg);
+        } catch (Exception e) {
+        e.printStackTrace();
         }
+        return R.ok();
+    }
 
-        @GetMapping("/sendMqtt/{code}/{msg}")
+    @GetMapping("/sendMqtt/{code}/{msg}")
         public R sendMqtt(@PathVariable(value = "code") String code , @PathVariable(value = "msg") String msg) {
-                try {
-                        mqttConnect.pub(code,msg);
-                } catch (Exception e) {
-                        e.printStackTrace();
-                }
-                return R.ok();
+        try {
+            mqttConnect.pub(code,msg);
+        } catch (Exception e) {
+        e.printStackTrace();
         }
+        return R.ok();
+    }
 }

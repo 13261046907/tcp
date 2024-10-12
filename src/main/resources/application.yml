@@ -13,7 +13,25 @@ spring:
       max-file-size: 256MB
       #单次请求的文件的总大小
       max-request-size: 1024MB
-
+  redis:
+    # 地址
+    host: 101.201.119.26
+    # 端口，默认为6379
+    port: 60019
+    # 数据库索引
+    database: 1
+    # 密码(如没有密码请注释掉)
+    password: zD%8fwgOgEhuHgKm
+    # 连接超时时间
+    timeout: 10s
+    # 是否开启ssl
+    ssl: false
+  datasource:
+    name: jetlinks
+    username: root
+    password: 3+PloXbwcM7+JA=
+    url: jdbc:mysql://101.201.119.26:30016/jetlinks/jetlinks?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
 knife4j:
   #是否开启Knife4j增强模式
@@ -23,7 +41,6 @@ knife4j:
     enable: true
     username: test
     password: 12313
-
 
 analyzer:
   #通讯端口 (int类型)

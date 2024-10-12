@@ -2,29 +2,44 @@ package com.tcp;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.config.RedisUtil;
+import com.mqtt.MQTTConnect;
 import com.rk.config.WebConfig;
 import com.rk.domain.DataPackage;
 import com.rk.utils.CacheManager;
-import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.DecimalFormat;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
 public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
+    private final RedisUtil redisUtil;
+
+    private final MQTTConnect mqttConnect;
+
+    // 构造函数注入RedisUtil
+    public NettyTcpServerHandler(RedisUtil redisUtil, MQTTConnect mqttConnect) {
+        this.redisUtil = redisUtil;
+        this.mqttConnect = mqttConnect;
+    }
+
     /**
      * 管理一个全局map，保存连接进服务端的通道数量
      */
@@ -110,23 +125,59 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         try {
-            String hex= ByteBufUtil.hexDump(((String) msg).getBytes());
+            String channelId = ctx.channel().id() + "";
+            String hex=  msg.toString().trim();
             log.info("加载客户端报文......");
             log.info("【" + ctx.channel().id() + "】" + " :" + hex);
-
-            //响应客户端
-            ctx.write("I got server message thanks server!");
-            
             DataPackage dp = DataPackage.from(msg.toString().trim());
             if (null == dp) {
-                log.info("接收原始数据: " + msg.toString().trim());
+                log.info("接收原始数据1:{}: " + hex);
+                Object instruction = redisUtil.get(channelId);
+                if(!Objects.isNull(instruction)) {
+                    log.info("redisKey:{},instruction:{}",channelId,instruction);
+                    //响应客户端
+                    ctx.write(instruction);
+                    // 输出结果
+                    List<String> hexList = getHexList(hex, 4);
+                    log.info("hexList:{}", JSONObject.toJSONString(hexList));
+                    log.info("channelWrite=channelId:{},msg:{}",channelId,msg);
+                    Map<String, Object> propertiesMap = new HashMap<>();
+                    propertiesMap.put("111111", hexList.get(0));
+                    syncSendMessageToDevice("111111", instruction+"", propertiesMap);
+                    //属性设备
+                 /*   try{
+                        Mono<DeviceDetail> deviceDetail = service.getDeviceDetail(instruction);
+                        DeviceDetail detail = deviceDetail.block();
+                        if (!Objects.isNull(detail)) {
+                            log.info("DeviceDetail:{}", JSONObject.toJSONString(detail));
+                            String metadata = detail.getMetadata();
+                            String productId = detail.getProductId();
+                            List<ProductProperties> propertiesList = new ArrayList<>();
+                            if (StringUtils.isNotBlank(metadata)) {
+                                JSONObject metadataJson = JSONObject.parseObject(metadata);
+                                propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
+                            }
+                            if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
+                                for (int i = 0; i < propertiesList.size(); i++) { // Adjust t
+                                    Map<String, Object> propertiesMap = new HashMap<>();
+                                    ProductProperties productProperties = propertiesList.get(i);
+                                    propertiesMap.put(productProperties.getId(), hexList.get(i));
+                                    log.info("deviceId:{},param:{}", instruction, JSONObject.toJSONString(propertiesMap));
+                                    syncSendMessageToDevice(productId, instruction, propertiesMap);
+                                }
+                            }
+                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }*/
+                }
 //                ctx.close();
                 return;
             }
 
-            log.info("接收数据: " + dp.getMN() + "\t" + msg.toString() + "\r\n");
+            log.info("接收数据2: " + dp.getMN() + "\t" + msg.toString() + "\r\n");
             if (!dp.getCN().equalsIgnoreCase("login") && (null == dp.getData() || dp.getMN() == null)) {
-                log.info("接收原始数据: " + msg.toString().trim());
+                log.info("接收原始数据3: " + msg.toString().trim());
 //                ctx.close();
                 return;
             }
@@ -205,11 +256,32 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             if (boo) {
                 ctx.writeAndFlush(dp.toAck());
             }
-
             this.post(url, JSONUtil.toJsonStr(data));
-        } finally {
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
             ReferenceCountUtil.release(msg);
         }
+    }
+
+    public List<String> getHexList(String convertedHexString, int num){
+        int startIndex = 6; // Starting index for the first humidity
+        List<String> hexList = new ArrayList<>();
+        int length = 4; // Length of each humidity substring
+        for (int i = 0; i <= num; i++) { // Adjust the loop count based on how many substrings you want
+            String hex= convertedHexString.substring(startIndex + (i * length), startIndex + ((i + 1) * length));
+            String hexStr = hexToStr(hex);
+            hexList.add(hexStr);
+        }
+        return  hexList;
+    }
+
+    private String hexToStr(String hexValue){
+        int decValue = Integer.parseInt(hexValue, 16);
+        double dividedByTen = (double) decValue / 10.0;
+        DecimalFormat df = new DecimalFormat("0.00");
+        String result = df.format(dividedByTen);
+        return result;
     }
 
     public void post(String finalUrl, String params) {
@@ -248,39 +320,27 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
      * @DESCRIPTION: 服务端给客户端发送消息
      * @return: void
      */
-    public void channelWrite(String channelId, Object msg) throws Exception {
-
+    public void channelWrite(String channelId, String msg) throws Exception {
         ChannelHandlerContext ctx = CHANNEL_MAP.get(channelId);
-
-        if (ctx == null) {
-            log.info("通道【" + channelId + "】不存在");
-            return;
-        }
-
-        if (msg == null && msg == "") {
-            log.info("服务端响应空的消息");
-            return;
-        }
-        //将客户端的信息直接返回写入ctx
-        ctx.write(msg);
-        //刷新缓存区
-        ctx.flush();
-    }
-
-    public void send(String code, String msg) {
-        try {
-            channelWrite(code,msg);
-        } catch (Exception e) {
+        try{
+            if (ctx == null) {
+                log.info("通道【" + channelId + "】不存在");
+                return;
+            }
+            if (msg == null && msg == "") {
+                log.info("服务端响应空的消息");
+                return;
+            }
+            redisUtil.set(channelId,msg,60*60);
+            //将客户端的信息直接返回写入ctx
+            ByteBuf bufAck = ctx.alloc().buffer();
+            byte[] payload = hexStringToByteArray(msg);
+            bufAck.writeBytes(payload);
+            ctx.writeAndFlush(bufAck);
+        }catch (Exception e){
             e.printStackTrace();
         }
-       /* if (CHANNEL_MAP.containsKey(code)) {
-            ChannelHandlerContext channelHandlerContext = CHANNEL_MAP.get(code);
-            channelHandlerContext.write(msg);
-        } else {
-            System.out.println("-------设备已经断开连接-------");
-        }*/
     }
-
 
     public byte[] hexStringToByteArray(String hexString) {
         int length = hexString.length();
@@ -326,4 +386,28 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         log.info(ctx.channel().id() + " 发生了错误,此连接被关闭" + "此时连通数量: " + CHANNEL_MAP.size());
         //cause.printStackTrace();
     }
+
+    private void syncSendMessageToDevice(String productId,String deviceId,Map<String, Object> props){
+        this.writeProperties(productId,deviceId, props);
+    }
+
+    //设置设备属性
+    @SneakyThrows
+    public void writeProperties(String productId,String deviceId,
+                                                     Map<String, Object> properties) {
+        log.info("deviceId:{},properties:{}",deviceId,properties);
+        try {
+            JSONObject message = new JSONObject();
+            message.put("deviceId",deviceId);
+            message.put("properties",JSONObject.toJSON(properties));
+            String topic = "/" + productId + "/" + deviceId + "/properties/report";
+            log.info("writeProperties-topic:{},message:{}",topic,message.toString());
+            String redisKey = "mqtt:"+deviceId;
+            redisUtil.set(redisKey,deviceId);
+            mqttConnect.pub(topic, message.toString());
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
