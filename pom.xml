@@ -9,8 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>Tcp</artifactId>
-    <version>0.0.1</version>
+    <artifactId>zhihuinongye-tcp</artifactId>
     <name>Tcp</name>
     <description>Demo project for Spring Boot</description>
     <url/>

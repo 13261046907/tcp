@@ -393,6 +393,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             log.info("writeProperties-topic:{},message:{}",topic,message.toString());
             String redisKey = "mqtt:"+deviceId;
             redisUtil.set(redisKey,deviceId);
+            log.info("mqttConnect:{}",JSONObject.toJSONString(mqttConnect));
             mqttConnect.pub(topic, message.toString());
         } catch (MqttException e) {
             e.printStackTrace();
