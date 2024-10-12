@@ -24,7 +24,7 @@ public class MQTTListener implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         try {
             server.setMqttClient(MqttConstant.MQTT_USERNAME, MqttConstant.MQTT_PASSWORD, initCallback);
-            server.sub("/111111/313431303334323238343334300D/properties/report");
+            server.sub("/111111/0103000000044409/properties/report");
             log.info("MQTT启动连接成功！");
         } catch (MqttException e) {
             log.error("MQTT启动连接失败！");

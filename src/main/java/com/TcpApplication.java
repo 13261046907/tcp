@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(scanBasePackages = "com")
-@MapperScan(basePackages = "com.insshopy.hype.center.mapper")
+@MapperScan(basePackages = "com.rk.mapper")
 public class TcpApplication {
     public static void main(String[] args) {
         SpringApplication.run(TcpApplication.class, args);

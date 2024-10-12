@@ -2,11 +2,16 @@ package com.tcp;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.config.RedisUtil;
 import com.mqtt.MQTTConnect;
+import com.mqtt.ProductProperties;
 import com.rk.config.WebConfig;
 import com.rk.domain.DataPackage;
+import com.rk.domain.DeviceInstance;
+import com.rk.service.DeviceInstanceService;
 import com.rk.utils.CacheManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -17,9 +22,9 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -34,10 +39,13 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
 
     private final MQTTConnect mqttConnect;
 
+    private final DeviceInstanceService deviceInstanceService;
+
     // 构造函数注入RedisUtil
-    public NettyTcpServerHandler(RedisUtil redisUtil, MQTTConnect mqttConnect) {
+    public NettyTcpServerHandler(RedisUtil redisUtil, MQTTConnect mqttConnect, DeviceInstanceService deviceInstanceService) {
         this.redisUtil = redisUtil;
         this.mqttConnect = mqttConnect;
+        this.deviceInstanceService = deviceInstanceService;
     }
 
     /**
@@ -103,25 +111,12 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         ctx.close();
     }
 
-   /* *//**
+   /**
      * @param ctx
      * @author xiongchuan on 2019/4/28 16:10
      * @DESCRIPTION: 有客户端发消息会触发此函数
      * @return: void
-     *//*
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        String hex=ByteBufUtil.hexDump(((String) msg).getBytes());
-        log.info("加载客户端报文......");
-        log.info("【" + ctx.channel().id() + "】" + " :" + hex);
-
-        *//**
-         *  下面可以解析数据，保存数据，生成返回报文，将需要返回报文写入write函数
-         *
-         *//*
-        //响应客户端
-        ctx.write("I got server message thanks server!");
-    }*/
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         try {
@@ -132,46 +127,40 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             DataPackage dp = DataPackage.from(msg.toString().trim());
             if (null == dp) {
                 log.info("接收原始数据1:{}: " + hex);
-                Object instruction = redisUtil.get(channelId);
-                if(!Objects.isNull(instruction)) {
-                    log.info("redisKey:{},instruction:{}",channelId,instruction);
+                Object deviceId = redisUtil.get(channelId);
+                if(!Objects.isNull(deviceId)) {
+                    log.info("redisKey:{},deviceId:{}",channelId,deviceId);
                     //响应客户端
-                    ctx.write(instruction);
+                    ctx.write(deviceId);
                     // 输出结果
                     List<String> hexList = getHexList(hex, 4);
-                    log.info("hexList:{}", JSONObject.toJSONString(hexList));
+//                    log.info("hexList:{}", JSONObject.toJSONString(hexList));
                     log.info("channelWrite=channelId:{},msg:{}",channelId,msg);
-                    Map<String, Object> propertiesMap = new HashMap<>();
-                    propertiesMap.put("111111", hexList.get(0));
-                    syncSendMessageToDevice("111111", instruction+"", propertiesMap);
                     //属性设备
-                 /*   try{
-                        Mono<DeviceDetail> deviceDetail = service.getDeviceDetail(instruction);
-                        DeviceDetail detail = deviceDetail.block();
-                        if (!Objects.isNull(detail)) {
-                            log.info("DeviceDetail:{}", JSONObject.toJSONString(detail));
-                            String metadata = detail.getMetadata();
-                            String productId = detail.getProductId();
-                            List<ProductProperties> propertiesList = new ArrayList<>();
-                            if (StringUtils.isNotBlank(metadata)) {
-                                JSONObject metadataJson = JSONObject.parseObject(metadata);
-                                propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
-                            }
+                    try{
+                        LambdaQueryWrapper<DeviceInstance> queryWrapper = new LambdaQueryWrapper<>();
+                        queryWrapper.eq(DeviceInstance::getId, deviceId);
+                        DeviceInstance deviceInstance = deviceInstanceService.getOne(queryWrapper);
+                        if(!Objects.isNull(deviceInstance)){
+                            String productId = deviceInstance.getProductId();
+                            String id = deviceInstance.getId();
+                            String metadata = deviceInstance.getDeriveMetadata();
+                            JSONObject metadataJson = JSONObject.parseObject(metadata);
+                            List<ProductProperties> propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
                             if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
                                 for (int i = 0; i < propertiesList.size(); i++) { // Adjust t
                                     Map<String, Object> propertiesMap = new HashMap<>();
                                     ProductProperties productProperties = propertiesList.get(i);
                                     propertiesMap.put(productProperties.getId(), hexList.get(i));
-                                    log.info("deviceId:{},param:{}", instruction, JSONObject.toJSONString(propertiesMap));
-                                    syncSendMessageToDevice(productId, instruction, propertiesMap);
+                                    log.info("deviceId:{},param:{}", deviceId, JSONObject.toJSONString(propertiesMap));
+                                    syncSendMessageToDevice(productId, id, propertiesMap);
                                 }
                             }
                         }
                     }catch (Exception e){
                         e.printStackTrace();
-                    }*/
+                    }
                 }
-//                ctx.close();
                 return;
             }
 

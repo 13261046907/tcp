@@ -2,6 +2,7 @@ package com.tcp;
 
 import com.config.RedisUtil;
 import com.mqtt.MQTTConnect;
+import com.rk.service.DeviceInstanceService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -21,10 +22,12 @@ public class NettyTcpServer implements ApplicationRunner {
 
     private final RedisUtil redisUtil;
     private final MQTTConnect mqttConnect;
+    private final DeviceInstanceService deviceInstanceService;
     // 构造函数注入RedisUtil
-    public NettyTcpServer(RedisUtil redisUtil, MQTTConnect mqttConnect) {
+    public NettyTcpServer(RedisUtil redisUtil, MQTTConnect mqttConnect, DeviceInstanceService deviceInstanceService) {
         this.redisUtil = redisUtil;
         this.mqttConnect = mqttConnect;
+        this.deviceInstanceService = deviceInstanceService;
     }
 
     public void start(InetSocketAddress address) {
@@ -39,7 +42,7 @@ public class NettyTcpServer implements ApplicationRunner {
                     .channel(NioServerSocketChannel.class)
                     .localAddress(address)
                     //编码解码
-                    .childHandler(new NettyTcpServerChannelInitializer(redisUtil,mqttConnect))
+                    .childHandler(new NettyTcpServerChannelInitializer(redisUtil,mqttConnect,deviceInstanceService))
                     //服务端接受连接的队列长度，如果队列已满，客户端连接将被拒绝
                     .option(ChannelOption.SO_BACKLOG, 128)
                     //保持长连接，2小时无数据激活心跳机制
