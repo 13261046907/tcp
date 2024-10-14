@@ -1,6 +1,5 @@
 package com.mqtt;
 
-import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.*;
@@ -17,18 +16,18 @@ import java.nio.charset.Charset;
 @Data
 public class MQTTConnect {
 
-    private String HOST = "tcp://101.201.119.26:11883";
-    private  String clientId = "jhyzhihuinongye120241009121";
-    private  String topic = "";
-    private MqttClient mqttClient;
-    private final InitCallback initCallback;
+  private String HOST = "tcp://101.201.119.26:11883";
+  private  String clientId = "jhyzhihuinongye20241215";
+  private  String topic = "";
+  private MqttClient mqttClient;
+  private final InitCallback initCallback;
 
 
   public MQTTConnect(InitCallback initCallback) {
     this.initCallback = initCallback;
   }
 
-    /**
+  /**
    * 客户端connect连接mqtt服务器
    *
    * @param username 用户名
@@ -36,12 +35,12 @@ public class MQTTConnect {
    * @param mqttCallback 回调函数
    **/
   public void setMqttClient(String username, String password, MqttCallback mqttCallback)
-      throws MqttException {
+          throws MqttException {
     MqttConnectOptions options = mqttConnectOptions(username, password);
-        if (mqttCallback == null) {
-            mqttClient.setCallback(mqttCallback);
-        } else {
-        }
+    if (mqttCallback == null) {
+      mqttClient.setCallback(mqttCallback);
+    } else {
+    }
     mqttClient.setCallback(mqttCallback);
     mqttClient.connect(options);
   }
@@ -50,7 +49,7 @@ public class MQTTConnect {
    * MQTT连接参数设置
    */
   private MqttConnectOptions mqttConnectOptions(String userName, String passWord)
-      throws MqttException {
+          throws MqttException {
     mqttClient = new MqttClient(HOST, clientId, new MemoryPersistence());
     MqttConnectOptions options = new MqttConnectOptions();
     options.setUserName(userName);
@@ -83,7 +82,6 @@ public class MQTTConnect {
   public void pub(String topic, String msg) throws MqttException {
     MqttMessage mqttMessage = new MqttMessage();
     mqttMessage.setPayload(msg.getBytes(Charset.forName("GBK")));
-    log.info("mqttClient:{}", JSONObject.toJSONString(mqttClient));
     if(mqttClient == null){
       setMqttClient(MqttConstant.MQTT_USERNAME, MqttConstant.MQTT_PASSWORD, initCallback);
     }
@@ -92,10 +90,13 @@ public class MQTTConnect {
     token.waitForCompletion();
   }
   public void pub(String topic,MqttMessage mqttMessage) throws MqttException {
+    if(mqttClient == null){
+      setMqttClient(MqttConstant.MQTT_USERNAME, MqttConstant.MQTT_PASSWORD, initCallback);
+    }
     MqttTopic mqttTopic = mqttClient.getTopic(topic);
     MqttDeliveryToken token = mqttTopic.publish(mqttMessage);
     token.waitForCompletion();
-    }
+  }
   public void pub(String topic, String msg, int qos) throws MqttException {
     MqttMessage mqttMessage = new MqttMessage();
     mqttMessage.setQos(qos);

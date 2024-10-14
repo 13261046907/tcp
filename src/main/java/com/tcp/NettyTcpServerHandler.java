@@ -23,6 +23,7 @@ import io.netty.util.ReferenceCountUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -130,10 +131,21 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 Object deviceId = redisUtil.get(channelId);
                 if(!Objects.isNull(deviceId)) {
                     log.info("redisKey:{},deviceId:{}",channelId,deviceId);
+                    String sendTopic = "/" + deviceId + "/function/invoke";
+                    String redisKey = "mqtt:"+deviceId;
+                    byte[] payload = hexStringToByteArray(hex);
+                    MqttMessage message = new MqttMessage(payload);
+                    redisUtil.set(redisKey,hex);
+                    log.info("invokedFunction-topic:{},message:{}",sendTopic,hex);
+                    try {
+                        mqttConnect.pub(sendTopic, message);
+                    } catch (MqttException e) {
+                        e.printStackTrace();
+                    }
                     //响应客户端
                     ctx.write(deviceId);
                     // 输出结果
-                    List<String> hexList = getHexList(hex, 4);
+                    /*List<String> hexList = getHexList(hex, 4);
 //                    log.info("hexList:{}", JSONObject.toJSONString(hexList));
                     log.info("channelWrite=channelId:{},msg:{}",channelId,msg);
                     //属性设备
@@ -159,7 +171,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         }
                     }catch (Exception e){
                         e.printStackTrace();
-                    }
+                    }*/
                 }
                 return;
             }

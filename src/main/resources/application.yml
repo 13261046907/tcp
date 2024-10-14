@@ -19,7 +19,7 @@ spring:
     # 端口，默认为6379
     port: 60019
     # 数据库索引
-    database: 1
+    database: 0
     # 密码(如没有密码请注释掉)
     password: zD%8fwgOgEhuHgKm
     # 连接超时时间
