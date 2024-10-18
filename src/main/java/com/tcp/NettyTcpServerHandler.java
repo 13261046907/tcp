@@ -2,15 +2,11 @@ package com.tcp;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.config.RedisUtil;
 import com.mqtt.MQTTConnect;
-import com.mqtt.ProductProperties;
 import com.rk.config.WebConfig;
 import com.rk.domain.DataPackage;
-import com.rk.domain.DeviceInstance;
 import com.rk.service.DeviceInstanceService;
 import com.rk.utils.CacheManager;
 import io.netty.buffer.ByteBuf;
@@ -25,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -41,6 +36,8 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
     private final MQTTConnect mqttConnect;
 
     private final DeviceInstanceService deviceInstanceService;
+
+    private final String tcpHeartbeat = "313431303334313830333536330D";
 
     // 构造函数注入RedisUtil
     public NettyTcpServerHandler(RedisUtil redisUtil, MQTTConnect mqttConnect, DeviceInstanceService deviceInstanceService) {
@@ -125,6 +122,9 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             String hex=  msg.toString().trim();
             log.info("加载客户端报文......");
             log.info("【" + ctx.channel().id() + "】" + " :" + hex);
+            if(tcpHeartbeat.equals(hex)){
+                return;
+            }
             DataPackage dp = DataPackage.from(msg.toString().trim());
             if (null == dp) {
                 log.info("接收原始数据1:{}: " + hex);
@@ -144,34 +144,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                     //响应客户端
                     ctx.write(deviceId);
-                    // 输出结果
-                    /*List<String> hexList = getHexList(hex, 4);
-//                    log.info("hexList:{}", JSONObject.toJSONString(hexList));
-                    log.info("channelWrite=channelId:{},msg:{}",channelId,msg);
-                    //属性设备
-                    try{
-                        LambdaQueryWrapper<DeviceInstance> queryWrapper = new LambdaQueryWrapper<>();
-                        queryWrapper.eq(DeviceInstance::getId, deviceId);
-                        DeviceInstance deviceInstance = deviceInstanceService.getOne(queryWrapper);
-                        if(!Objects.isNull(deviceInstance)){
-                            String productId = deviceInstance.getProductId();
-                            String id = deviceInstance.getId();
-                            String metadata = deviceInstance.getDeriveMetadata();
-                            JSONObject metadataJson = JSONObject.parseObject(metadata);
-                            List<ProductProperties> propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
-                            if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
-                                for (int i = 0; i < propertiesList.size(); i++) { // Adjust t
-                                    Map<String, Object> propertiesMap = new HashMap<>();
-                                    ProductProperties productProperties = propertiesList.get(i);
-                                    propertiesMap.put(productProperties.getId(), hexList.get(i));
-                                    log.info("deviceId:{},param:{}", deviceId, JSONObject.toJSONString(propertiesMap));
-                                    syncSendMessageToDevice(productId, id, propertiesMap);
-                                }
-                            }
-                        }
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }*/
                 }
                 return;
             }
