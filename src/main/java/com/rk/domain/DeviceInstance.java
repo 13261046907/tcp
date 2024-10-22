@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.sql.JDBCType;
 
 @TableName("dev_device_instance")
 @Data
@@ -33,6 +34,9 @@ public class DeviceInstance implements Serializable {
 
     @TableField("derive_metadata")
     private String deriveMetadata;
+
+    @TableField("derive_metadata_value")
+    private String deriveMetadataValue;
 
     private String state;
 

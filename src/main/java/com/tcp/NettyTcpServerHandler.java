@@ -1,48 +1,50 @@
 package com.tcp;
 
 import cn.hutool.http.HttpRequest;
-import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
-import com.mqtt.MQTTConnect;
-import com.rk.config.WebConfig;
-import com.rk.domain.DataPackage;
+import com.rk.domain.DeriveMetadataValueVo;
+import com.rk.domain.DeviceInstancesTcpTemplateEntity;
+import com.rk.domain.ProductProperties;
 import com.rk.service.DeviceInstanceService;
-import com.rk.utils.CacheManager;
+import com.rk.service.DeviceTcpInstanceService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.ReferenceCountUtil;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
 public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
+
     private final RedisUtil redisUtil;
 
-    private final MQTTConnect mqttConnect;
+    private final DeviceTcpInstanceService deviceTcpInstanceService;
 
     private final DeviceInstanceService deviceInstanceService;
 
     private final String tcpHeartbeat = "313431303334313830333536330D";
 
     // 构造函数注入RedisUtil
-    public NettyTcpServerHandler(RedisUtil redisUtil, MQTTConnect mqttConnect, DeviceInstanceService deviceInstanceService) {
+    public NettyTcpServerHandler(RedisUtil redisUtil, DeviceInstanceService deviceInstanceService, DeviceTcpInstanceService deviceTcpInstanceService) {
         this.redisUtil = redisUtil;
-        this.mqttConnect = mqttConnect;
+        this.deviceTcpInstanceService = deviceTcpInstanceService;
         this.deviceInstanceService = deviceInstanceService;
     }
 
@@ -125,115 +127,21 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             if(tcpHeartbeat.equals(hex)){
                 return;
             }
-            DataPackage dp = DataPackage.from(msg.toString().trim());
-            if (null == dp) {
-                log.info("接收原始数据1:{}: " + hex);
-                Object deviceId = redisUtil.get(channelId);
-                if(!Objects.isNull(deviceId)) {
-                    log.info("redisKey:{},deviceId:{}",channelId,deviceId);
-                    String sendTopic = "/" + deviceId + "/function/invoke";
-                    String redisKey = "mqtt:"+deviceId;
-                    byte[] payload = hexStringToByteArray(hex);
-                    MqttMessage message = new MqttMessage(payload);
-                    redisUtil.set(redisKey,hex);
-                    log.info("invokedFunction-topic:{},message:{}",sendTopic,hex);
-                    try {
-                        mqttConnect.pub(sendTopic, message);
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                    }
-                    //响应客户端
-                    ctx.write(deviceId);
+            log.info("接收原始数据1:{}: " + hex);
+            Object deviceId = redisUtil.get(channelId);
+            if(!Objects.isNull(deviceId)) {
+                log.info("redisKey:{},deviceId:{}",channelId,deviceId);
+                try {
+                    hexBuild(deviceId+"",hex);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                return;
+                //响应客户端
+                ctx.write(deviceId);
             }
-
-            log.info("接收数据2: " + dp.getMN() + "\t" + msg.toString() + "\r\n");
-            if (!dp.getCN().equalsIgnoreCase("login") && (null == dp.getData() || dp.getMN() == null)) {
-                log.info("接收原始数据3: " + msg.toString().trim());
-//                ctx.close();
-                return;
-            }
-
-            CacheManager.getInstance().updateDevice(dp.getMN(), ctx);
-            boolean boo = true;
-            String url = null;
-            Map<String, Object> data = new HashMap();
-            String var7 = dp.getCN().toLowerCase();
-            byte var8 = -1;
-            switch(var7.hashCode()) {
-                case 113250:
-                    if (var7.equals("rtd")) {
-                        var8 = 1;
-                    }
-                    break;
-                case 3064427:
-                    if (var7.equals("ctrl")) {
-                        var8 = 2;
-                    }
-                    break;
-                case 103149417:
-                    if (var7.equals("login")) {
-                        var8 = 0;
-                    }
-                    break;
-                case 110621352:
-                    if (var7.equals("trans")) {
-                        var8 = 4;
-                    }
-                    break;
-                case 1082290915:
-                    if (var7.equals("receive")) {
-                        var8 = 3;
-                    }
-            }
-
-            List convertToList;
-            switch(var8) {
-                case 0:
-                    url = WebConfig.getLogin();
-                    data.put("type", dp.getCN());
-                    data.put("deviceAddr", dp.getMN());
-                    break;
-                case 1:
-                    url = WebConfig.getRealTimeData();
-                    data.put("type", dp.getCN());
-                    data.put("deviceAddr", dp.getMN());
-                    data.put("data", dp.getData());
-                    break;
-                case 2:
-                    boo = false;
-                    url = WebConfig.getCtrl();
-                    convertToList = DataPackage.convertToList(dp.getData());
-                    data.put("type", dp.getCN());
-                    data.put("deviceAddr", dp.getMN());
-                    data.put("data", convertToList);
-                    break;
-                case 3:
-                    boo = false;
-                    url = WebConfig.getReceive();
-                    convertToList = DataPackage.convertToList(dp.getData());
-                    data.put("type", dp.getCN());
-                    data.put("deviceAddr", dp.getMN());
-                    data.put("data", convertToList);
-                    break;
-                case 4:
-                    boo = false;
-                    url = WebConfig.getTrans();
-                    convertToList = DataPackage.convertToList(dp.getData());
-                    data.put("type", dp.getCN());
-                    data.put("deviceAddr", dp.getMN());
-                    data.put("data", convertToList);
-            }
-
-            if (boo) {
-                ctx.writeAndFlush(dp.toAck());
-            }
-            this.post(url, JSONUtil.toJsonStr(data));
+            return;
         }catch (Exception e){
             e.printStackTrace();
-        }finally {
-            ReferenceCountUtil.release(msg);
         }
     }
 
@@ -304,7 +212,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 log.info("服务端响应空的消息");
                 return;
             }
-            redisUtil.set(channelId,msg,60*60);
             //将客户端的信息直接返回写入ctx
             ByteBuf bufAck = ctx.alloc().buffer();
             byte[] payload = hexStringToByteArray(msg);
@@ -360,27 +267,75 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         //cause.printStackTrace();
     }
 
-    private void syncSendMessageToDevice(String productId,String deviceId,Map<String, Object> props){
-        this.writeProperties(productId,deviceId, props);
-    }
-
-    //设置设备属性
-    @SneakyThrows
-    public void writeProperties(String productId,String deviceId,
-                                                     Map<String, Object> properties) {
-        log.info("deviceId:{},properties:{}",deviceId,properties);
-        try {
-            JSONObject message = new JSONObject();
-            message.put("deviceId",deviceId);
-            message.put("properties",JSONObject.toJSON(properties));
-            String topic = "/" + productId + "/" + deviceId + "/properties/report";
-            log.info("writeProperties-topic:{},message:{}",topic,message.toString());
-            String redisKey = "mqtt:"+deviceId;
-            redisUtil.set(redisKey,deviceId);
-            log.info("mqttConnect:{}",JSONObject.toJSONString(mqttConnect));
-            mqttConnect.pub(topic, message.toString());
-        } catch (MqttException e) {
-            e.printStackTrace();
+    public void hexBuild(String deviceId,String convertedHexString){
+        Integer deviceType = 0;
+        Integer startFunction = 4;
+        log.info("sendHex:{}",convertedHexString);
+        //根据id出现tcp模版表crc是否存在
+        DeviceInstancesTcpTemplateEntity tcpTemplateByDeviceId = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId);
+        if(!Objects.isNull(tcpTemplateByDeviceId)){
+            deviceType = tcpTemplateByDeviceId.getDeviceType();
+            String isPrefix = tcpTemplateByDeviceId.getIsPrefix();
+            if("0".equals(isPrefix)){
+                //不带发送指令,直接解析不需要截取
+                deviceId = tcpTemplateByDeviceId.getDeviceId();
+                deviceType = tcpTemplateByDeviceId.getDeviceType();
+            }else {
+                DeviceInstancesTcpTemplateEntity deviceInstancesTcpTemplateEntity = deviceTcpInstanceService.findDeviceInstanceTcpTemplateByCrc(convertedHexString);
+                log.info("deviceInstancesTcpTemplateEntity:{}", JSONObject.toJSONString(deviceInstancesTcpTemplateEntity));
+                if(!Objects.isNull(deviceInstancesTcpTemplateEntity)){
+                    //tcp协议解析
+                    deviceId = deviceInstancesTcpTemplateEntity.getDeviceId();
+                    deviceType = deviceInstancesTcpTemplateEntity.getDeviceType();
+                    int endIndex = convertedHexString.indexOf(convertedHexString) + convertedHexString.length();
+                    // 生成最新的
+                    convertedHexString = convertedHexString.substring(endIndex);
+                    log.info("tcp协议convertedHexString:{},deviceId:{},deviceType:{}",convertedHexString,deviceId,deviceType);
+                }
+            }
+        }
+        if (1 == deviceType) {
+            //属性设备
+            String metadata = deviceInstanceService.selectMataDataById(deviceId);
+            if (StringUtils.isNotBlank(metadata)) {
+                List<ProductProperties> propertiesList = new ArrayList<>();
+                List<Integer> metricsList = new ArrayList<>();
+                JSONObject metadataJson = JSONObject.parseObject(metadata);
+                JSONArray properties = metadataJson.getJSONArray("properties");
+                for (int i = 0; i < properties.size(); i++) {
+                    JSONObject property = properties.getJSONObject(i);
+                    String value = null;
+                    if (property.containsKey("expands") && property.getJSONObject("expands").containsKey("metrics")) {
+                        JSONArray metrics = property.getJSONObject("expands").getJSONArray("metrics");
+                        if (metrics.size() > 0) {
+                            value = metrics.getJSONObject(0).getString("value");
+                            if(StringUtils.isNotBlank(value)){
+                                //存在metrics,标记
+                                metricsList.add(i);
+                            }
+                        }
+                    }
+                }
+                propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
+                startFunction = propertiesList.size();
+                List<String> hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsList);
+                log.info("hexList:{}", JSONObject.toJSONString(hexList));
+                if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
+                    List<DeriveMetadataValueVo> deriveMetadataValueVos = new ArrayList<>();
+                    for (int i = 0; i < propertiesList.size(); i++) { // Adjust t
+                        ProductProperties productProperties = propertiesList.get(i);
+                        DeriveMetadataValueVo deriveMetadataValueVo = new DeriveMetadataValueVo();
+                        deriveMetadataValueVo.setType(productProperties.getId());
+                        deriveMetadataValueVo.setValue(hexList.get(i));
+                        deriveMetadataValueVo.setUpdateTime(new Date());
+                        deriveMetadataValueVos.add(deriveMetadataValueVo);
+                    }
+                    String deriveMetadataValue = JSONArray.toJSONString(deriveMetadataValueVos);
+                    log.info(JSONObject.toJSONString(deriveMetadataValue));
+                    //update 数据库
+                    deviceInstanceService.updateDeriveMetadataValueById(deriveMetadataValue,deviceId);
+                }
+            }
         }
     }
 

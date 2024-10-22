@@ -1,19 +1,16 @@
 package com.tcp;
 
 import com.config.RedisUtil;
-import com.mqtt.MQTTConnect;
 import com.rk.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class TcpController {
-    @Autowired
-    private  MQTTConnect mqttConnect;
+
     @Autowired
     private NettyTcpServerHandler serverHandler;
     @Autowired
@@ -31,19 +28,33 @@ public class TcpController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return  R.ok(deviceid);
+        return R.ok(deviceid);
     }
-
     @RequestMapping(
-            value = {"/sendMqtt"},
+            value = {"/sendCodeByDevice"},
             method = {RequestMethod.GET}
     )
     @ResponseBody
-    public void sendMqtt(@PathVariable(value = "code") String code , @PathVariable(value = "msg") String msg) {
+    public R sendCodeByDevice(String code ,String deviceId) {
         try {
-            mqttConnect.pub(code,msg);
+            redisUtil.set(code,deviceId);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return R.ok(deviceId);
+    }
+
+    @RequestMapping(
+            value = {"/hexBuild"},
+            method = {RequestMethod.GET}
+    )
+    @ResponseBody
+    public R hexBuild(String deviceId ,String convertedHexString) {
+        try {
+            serverHandler.hexBuild(deviceId,convertedHexString);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return R.ok(deviceId);
     }
 }

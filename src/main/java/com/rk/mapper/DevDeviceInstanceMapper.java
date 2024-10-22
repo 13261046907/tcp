@@ -14,5 +14,8 @@ import com.rk.domain.DeviceInstance;
  */
 public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
+    String selectMataDataById(String deviceId);
+
+    void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 
 }

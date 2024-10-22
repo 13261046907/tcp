@@ -1,8 +1,8 @@
 package com.tcp;
 
 import com.config.RedisUtil;
-import com.mqtt.MQTTConnect;
 import com.rk.service.DeviceInstanceService;
+import com.rk.service.DeviceTcpInstanceService;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
@@ -17,13 +17,13 @@ import io.netty.handler.codec.string.StringEncoder;
 
 public class NettyTcpServerChannelInitializer extends ChannelInitializer<SocketChannel> {
     private final RedisUtil redisUtil;
-    private final MQTTConnect mqttConnect;
+    private final DeviceTcpInstanceService deviceTcpInstanceService;
     private final DeviceInstanceService deviceInstanceService;
 
     // 构造函数注入RedisUtil
-    public NettyTcpServerChannelInitializer(RedisUtil redisUtil, MQTTConnect mqttConnect,DeviceInstanceService deviceInstanceService) {
+    public NettyTcpServerChannelInitializer(RedisUtil redisUtil, DeviceInstanceService deviceInstanceService, DeviceTcpInstanceService deviceTcpInstanceService) {
         this.redisUtil = redisUtil;
-        this.mqttConnect = mqttConnect;
+        this.deviceTcpInstanceService = deviceTcpInstanceService;
         this.deviceInstanceService = deviceInstanceService;
     }
 
@@ -33,7 +33,7 @@ public class NettyTcpServerChannelInitializer extends ChannelInitializer<SocketC
         socketChannel.pipeline().addLast("encoder", new MyDecoder());
         socketChannel.pipeline().addLast(new ObjectEncoder());
         socketChannel.pipeline().addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-        socketChannel.pipeline().addLast(new NettyTcpServerHandler(redisUtil,mqttConnect,deviceInstanceService));
+        socketChannel.pipeline().addLast(new NettyTcpServerHandler(redisUtil, deviceInstanceService, deviceTcpInstanceService));
         ByteBuf delimiter = Unpooled.copiedBuffer("_$".getBytes());
         socketChannel.pipeline().addLast(new ChannelHandler[]{new DelimiterBasedFrameDecoder(10240, false, delimiter)});
         socketChannel.pipeline().addLast(new ChannelHandler[]{new StringDecoder()});

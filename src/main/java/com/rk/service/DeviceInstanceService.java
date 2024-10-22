@@ -13,4 +13,7 @@ import com.rk.domain.DeviceInstance;
  */
 public interface DeviceInstanceService extends IService<DeviceInstance> {
 
+    String selectMataDataById(String deviceId);
+
+    void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 }

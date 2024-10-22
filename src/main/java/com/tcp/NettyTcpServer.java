@@ -1,8 +1,8 @@
 package com.tcp;
 
 import com.config.RedisUtil;
-import com.mqtt.MQTTConnect;
 import com.rk.service.DeviceInstanceService;
+import com.rk.service.DeviceTcpInstanceService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -21,12 +21,12 @@ import java.net.InetSocketAddress;
 public class NettyTcpServer implements ApplicationRunner {
 
     private final RedisUtil redisUtil;
-    private final MQTTConnect mqttConnect;
+    private final DeviceTcpInstanceService deviceTcpInstanceService;
     private final DeviceInstanceService deviceInstanceService;
     // 构造函数注入RedisUtil
-    public NettyTcpServer(RedisUtil redisUtil, MQTTConnect mqttConnect, DeviceInstanceService deviceInstanceService) {
+    public NettyTcpServer(RedisUtil redisUtil, DeviceInstanceService deviceInstanceService, DeviceTcpInstanceService deviceTcpInstanceService) {
         this.redisUtil = redisUtil;
-        this.mqttConnect = mqttConnect;
+        this.deviceTcpInstanceService = deviceTcpInstanceService;
         this.deviceInstanceService = deviceInstanceService;
     }
 
@@ -42,7 +42,7 @@ public class NettyTcpServer implements ApplicationRunner {
                     .channel(NioServerSocketChannel.class)
                     .localAddress(address)
                     //编码解码
-                    .childHandler(new NettyTcpServerChannelInitializer(redisUtil,mqttConnect,deviceInstanceService))
+                    .childHandler(new NettyTcpServerChannelInitializer(redisUtil, deviceInstanceService, deviceTcpInstanceService))
                     //服务端接受连接的队列长度，如果队列已满，客户端连接将被拒绝
                     .option(ChannelOption.SO_BACKLOG, 128)
                     //保持长连接，2小时无数据激活心跳机制

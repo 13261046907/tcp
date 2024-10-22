@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rk.mapper.DevDeviceInstanceMapper">
+
+    <select id="selectMataDataById" resultType="java.lang.String">
+        select derive_metadata from dev_device_instance where id=#{deviceId};
+    </select>
+    <select id="updateDeriveMetadataValueById">
+        update dev_device_instance set derive_metadata_value = #{deriveMetadataValue} where id=#{deviceId};
+    </select>
+</mapper>
