@@ -2,6 +2,7 @@ package com.rk.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.rk.domain.DeviceInstance;
+import com.rk.domain.DeviceModel;
 
 /**
  * <p>
@@ -14,6 +15,14 @@ import com.rk.domain.DeviceInstance;
 public interface DeviceInstanceService extends IService<DeviceInstance> {
 
     String selectMataDataById(String deviceId);
+
+    String selectTcpTempBySendHex(String sendHex);
+
+    String selectDeviceIdByAddress(String deviceAddress);
+
+    DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress);
+
+    void insertDeviceModel(DeviceModel deviceModel);
 
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 }

@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
 import com.rk.domain.DeriveMetadataValueVo;
 import com.rk.domain.DeviceInstancesTcpTemplateEntity;
+import com.rk.domain.DeviceModel;
 import com.rk.domain.ProductProperties;
 import com.rk.service.DeviceInstanceService;
 import com.rk.service.DeviceTcpInstanceService;
@@ -39,7 +40,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
 
     private final DeviceInstanceService deviceInstanceService;
 
-    private final String tcpHeartbeat = "313431303334313830333536330D";
+    private final String tcpHeartbeat = "383633313231303737393134313930";
 
     // 构造函数注入RedisUtil
     public NettyTcpServerHandler(RedisUtil redisUtil, DeviceInstanceService deviceInstanceService, DeviceTcpInstanceService deviceTcpInstanceService) {
@@ -123,22 +124,59 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             String channelId = ctx.channel().id() + "";
             String hex=  msg.toString().trim();
             log.info("加载客户端报文......");
-            log.info("【" + ctx.channel().id() + "】" + " :" + hex);
+            log.info("【" + channelId + "】" + " :" + hex);
             if(tcpHeartbeat.equals(hex)){
                 return;
             }
             log.info("接收原始数据1:{}: " + hex);
-            Object deviceId = redisUtil.get(channelId);
-            if(!Objects.isNull(deviceId)) {
-                log.info("redisKey:{},deviceId:{}",channelId,deviceId);
-                try {
-                    hexBuild(deviceId+"",hex);
-                } catch (Exception e) {
-                    e.printStackTrace();
+            try {
+                String modelId = "";
+                String sendHex = "";
+                String deviceAddress = "";
+                String result = "";
+                String deviceId = "";
+                if(hex.length() > 48){
+                    modelId = hex.substring(0, 30);
+                    sendHex = hex.substring(30, 46);
+                    int index = hex.indexOf(modelId);
+                    result = hex.substring(index + modelId.length());
+                    deviceAddress = hex.substring(46, 48);
+                    System.out.println("perStr:"+modelId+"deviceAddress:"+deviceAddress+";sendHex:"+sendHex+";result="+result);
+                }else if(hex.length() > 32){
+                    //不带发送指令
+                    modelId = hex.substring(0, 30);
+                    result = hex.substring(modelId.length());
+                    deviceAddress = hex.substring(30, 32);
+                    System.out.println("perStr:"+modelId+"deviceAddress:"+deviceAddress+";result="+result);
                 }
-                //响应客户端
-                ctx.write(deviceId);
+                if(StringUtils.isNotBlank(modelId) && StringUtils.isNotBlank(deviceAddress)){
+                    //根据4g模块和设备地址查询通道信息
+                    DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
+                    if(!Objects.isNull(queryDeviceModel)){
+                        queryDeviceModel.setChannel(channelId);
+                    }else {
+                        DeviceModel deviceModel = new DeviceModel();
+                        deviceModel.setModelId(modelId);
+                        deviceModel.setChannel(channelId);
+                        deviceModel.setDeviceAddress(deviceAddress);
+                        deviceInstanceService.insertDeviceModel(deviceModel);
+                    }
+                    //不带发送指令,地址码查询
+                    deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
+                    if(StringUtils.isBlank(deviceId)){
+                        //根据地址码查询设备id
+                        deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
+                    }
+                    //根据sendHex查询数据库是否存在
+                    if(StringUtils.isNotBlank(deviceId)){
+                        hexBuild(deviceId,result);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            //响应客户端
+            ctx.write(channelId);
             return;
         }catch (Exception e){
             e.printStackTrace();
@@ -281,15 +319,17 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 deviceId = tcpTemplateByDeviceId.getDeviceId();
                 deviceType = tcpTemplateByDeviceId.getDeviceType();
             }else {
-                DeviceInstancesTcpTemplateEntity deviceInstancesTcpTemplateEntity = deviceTcpInstanceService.findDeviceInstanceTcpTemplateByCrc(convertedHexString);
+                String sendHex = convertedHexString.substring(0,16);
+                DeviceInstancesTcpTemplateEntity deviceInstancesTcpTemplateEntity = deviceTcpInstanceService.findDeviceInstanceTcpTemplateByCrc(sendHex);
                 log.info("deviceInstancesTcpTemplateEntity:{}", JSONObject.toJSONString(deviceInstancesTcpTemplateEntity));
                 if(!Objects.isNull(deviceInstancesTcpTemplateEntity)){
                     //tcp协议解析
                     deviceId = deviceInstancesTcpTemplateEntity.getDeviceId();
                     deviceType = deviceInstancesTcpTemplateEntity.getDeviceType();
-                    int endIndex = convertedHexString.indexOf(convertedHexString) + convertedHexString.length();
+                    // 查找 bb 在 aa 中的起始位置
+                    int index = convertedHexString.indexOf(sendHex);
                     // 生成最新的
-                    convertedHexString = convertedHexString.substring(endIndex);
+                    convertedHexString = convertedHexString.substring(index + sendHex.length());
                     log.info("tcp协议convertedHexString:{},deviceId:{},deviceType:{}",convertedHexString,deviceId,deviceType);
                 }
             }
@@ -338,5 +378,4 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             }
         }
     }
-
 }

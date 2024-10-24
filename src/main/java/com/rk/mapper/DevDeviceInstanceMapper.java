@@ -2,6 +2,7 @@ package com.rk.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.rk.domain.DeviceInstance;
+import com.rk.domain.DeviceModel;
 
 
 /**
@@ -16,6 +17,14 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
     String selectMataDataById(String deviceId);
 
+    String selectTcpTempBySendHex(String sendHex);
+
+    String selectDeviceIdByAddress(String deviceAddress);
+
+    DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress);
+
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
+
+    void insertDeviceModel(DeviceModel deviceModel);
 
 }
