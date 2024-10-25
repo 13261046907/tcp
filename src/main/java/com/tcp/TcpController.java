@@ -95,6 +95,7 @@ public class TcpController {
             DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
             if(!Objects.isNull(queryDeviceModel)){
                 queryDeviceModel.setChannel(channel);
+                deviceInstanceService.updateDeviceModelByDeviceId(channel,modelId,deviceAddress);
             }else {
                 DeviceModel deviceModel = new DeviceModel();
                 deviceModel.setModelId(modelId);

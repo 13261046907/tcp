@@ -29,17 +29,25 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     public String selectDeviceIdByAddress(String deviceAddress) {
         return devDeviceInstanceMapper.selectDeviceIdByAddress(deviceAddress);
     }
+
     @Override
     public DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress) {
         return devDeviceInstanceMapper.selectChannelByDeviceId(modelId,deviceAddress);
     }
+
     @Override
     public void insertDeviceModel(DeviceModel deviceModel){
         devDeviceInstanceMapper.insertDeviceModel(deviceModel);
     }
+
     @Override
     public void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId) {
         devDeviceInstanceMapper.updateDeriveMetadataValueById(deriveMetadataValue,deviceId);
+    }
+
+    @Override
+    public void updateDeviceModelByDeviceId(String channel,String modelId,String deviceAddress) {
+        devDeviceInstanceMapper.updateDeviceModelByDeviceId(channel,modelId,deviceAddress);
     }
 
 }

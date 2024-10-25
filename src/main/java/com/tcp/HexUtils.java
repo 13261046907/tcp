@@ -36,9 +36,4 @@ public class HexUtils {
         String result = df.format(dividedByTen);
         return result;
     }
-
-    public static void main(String[] args) {
-        List<String> hexList = getHexList("01031400D400F400000402027A0000000000000000002434DC", 7, new ArrayList<>());
-        System.out.println(JSONObject.toJSON(hexList));
-    }
 }

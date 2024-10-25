@@ -25,4 +25,6 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
     void insertDeviceModel(DeviceModel deviceModel);
 
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
+
+    void updateDeviceModelByDeviceId(String channel,String modelId,String deviceAddress);
 }

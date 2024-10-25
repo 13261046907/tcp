@@ -22,6 +22,10 @@
         update dev_device_instance set derive_metadata_value = #{deriveMetadataValue} where id=#{deviceId};
     </update>
 
+    <update id="updateDeviceModelByDeviceId">
+        update dev_device_model set channel = #{channel} where model_id=#{modelId} and device_address=#{deviceAddress};
+    </update>
+
     <insert id="insertDeviceModel" keyProperty="id" useGeneratedKeys="true">
         insert into dev_device_model(model_id, device_address, channel)
         values (#{modelId}, #{deviceAddress}, #{channel})

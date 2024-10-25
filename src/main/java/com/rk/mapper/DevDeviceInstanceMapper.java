@@ -25,6 +25,8 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 
+    void  updateDeviceModelByDeviceId(String channel,String modelId,String deviceAddress);
+
     void insertDeviceModel(DeviceModel deviceModel);
 
 }

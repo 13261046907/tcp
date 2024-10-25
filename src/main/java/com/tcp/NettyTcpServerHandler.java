@@ -147,13 +147,14 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     modelId = hex.substring(0, 30);
                     result = hex.substring(modelId.length());
                     deviceAddress = hex.substring(30, 32);
-                    System.out.println("perStr:"+modelId+"deviceAddress:"+deviceAddress+";result="+result);
+                    System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
                 }
                 if(StringUtils.isNotBlank(modelId) && StringUtils.isNotBlank(deviceAddress)){
                     //根据4g模块和设备地址查询通道信息
                     DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
                     if(!Objects.isNull(queryDeviceModel)){
                         queryDeviceModel.setChannel(channelId);
+                        deviceInstanceService.updateDeviceModelByDeviceId(channelId,modelId,deviceAddress);
                     }else {
                         DeviceModel deviceModel = new DeviceModel();
                         deviceModel.setModelId(modelId);
@@ -253,6 +254,8 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             //将客户端的信息直接返回写入ctx
             ByteBuf bufAck = ctx.alloc().buffer();
             byte[] payload = hexStringToByteArray(msg);
+//            byte[] payload = msg.getBytes("UTF-8");
+//            byte[] payload = msg.getBytes(Charset.forName("GBK"));
             bufAck.writeBytes(payload);
             ctx.writeAndFlush(bufAck);
         }catch (Exception e){
