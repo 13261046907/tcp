@@ -20,4 +20,7 @@ public class DeviceModel implements Serializable {
 
     @TableField("`channel`")
     private String channel;
+
+    @TableField("`is_prefix`")
+    private String isPrefix;
 }

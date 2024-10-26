@@ -17,9 +17,13 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
     String selectMataDataById(String deviceId);
 
+    String selectMataDataValueById(String deviceId);
+
     String selectTcpTempBySendHex(String sendHex);
 
     String selectDeviceIdByAddress(String deviceAddress);
+
+    String selectTcpTempByDeviceAddress(String deviceAddress);
 
     DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress);
 

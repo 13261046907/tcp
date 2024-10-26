@@ -13,7 +13,7 @@ import com.rk.domain.DeviceInstancesTcpTemplateEntity;
  */
 public interface DeviceTcpInstanceService extends IService<DeviceInstancesTcpTemplateEntity> {
 
-    DeviceInstancesTcpTemplateEntity findTcpTemplateByDeviceId(String deviceId);
+    DeviceInstancesTcpTemplateEntity findTcpTemplateByDeviceId(String deviceId,int paramNum);
 
     DeviceInstancesTcpTemplateEntity findDeviceInstanceTcpTemplateByCrc(String hexCrx);
 

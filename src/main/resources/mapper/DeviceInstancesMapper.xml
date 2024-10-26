@@ -6,16 +6,33 @@
         select derive_metadata from dev_device_instance where id=#{deviceId};
     </select>
 
+    <select id="selectMataDataValueById" resultType="java.lang.String">
+        select derive_metadata_value from dev_device_instance where id=#{deviceId};
+    </select>
+
     <select id="selectDeviceIdByAddress" resultType="java.lang.String">
-        select id from dev_device_instance where device_address=#{deviceAddress};
+        select device_id from dev_device_instance_tcp_template where device_address=#{deviceAddress} limit 1;
+    </select>
+
+    <select id="selectChannelByDeviceId" resultType="com.rk.domain.DeviceModel">
+        SELECT id,model_id,device_address,channel,is_prefix FROM dev_device_model
+        <where>
+            1=1
+            <if test="modelId != null and modelId != ''">
+                and  model_id = #{modelId}
+            </if>
+            <if test="deviceAddress != null and deviceAddress != ''">
+                and device_address = #{deviceAddress} ;
+            </if>
+        </where>
     </select>
 
     <select id="selectTcpTempBySendHex" resultType="java.lang.String">
         SELECT device_id FROM dev_device_instance_tcp_template WHERE instruction_crc = #{sendHex};
     </select>
 
-    <select id="selectChannelByDeviceId" resultType="com.rk.domain.DeviceModel">
-        SELECT id,model_id,device_address,channel FROM dev_device_model WHERE model_id = #{modelId} and device_address = #{deviceAddress} ;
+    <select id="selectTcpTempByDeviceAddress" resultType="java.lang.String">
+        SELECT device_id FROM dev_device_instance_tcp_template WHERE device_address=#{deviceAddress};
     </select>
 
     <update id="updateDeriveMetadataValueById">

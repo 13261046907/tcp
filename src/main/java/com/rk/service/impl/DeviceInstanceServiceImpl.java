@@ -21,6 +21,11 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     }
 
     @Override
+    public String selectMataDataValueById(String deviceId) {
+        return devDeviceInstanceMapper.selectMataDataValueById(deviceId);
+    }
+
+    @Override
     public String selectTcpTempBySendHex(String sendHex) {
         return devDeviceInstanceMapper.selectTcpTempBySendHex(sendHex);
     }
@@ -30,6 +35,10 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
         return devDeviceInstanceMapper.selectDeviceIdByAddress(deviceAddress);
     }
 
+    @Override
+    public String selectTcpTempByDeviceAddress(String deviceAddress) {
+        return devDeviceInstanceMapper.selectTcpTempByDeviceAddress(deviceAddress);
+    }
     @Override
     public DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress) {
         return devDeviceInstanceMapper.selectChannelByDeviceId(modelId,deviceAddress);

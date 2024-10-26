@@ -10,9 +10,10 @@ import org.springframework.stereotype.Service;
 @Service("deviceTcpInstanceService")
 public class DeviceTcpInstanceServiceImpl extends ServiceImpl<DevDeviceTcpInstanceMapper, DeviceInstancesTcpTemplateEntity> implements DeviceTcpInstanceService {
     @Override
-    public DeviceInstancesTcpTemplateEntity findTcpTemplateByDeviceId(String deviceId) {
+    public DeviceInstancesTcpTemplateEntity findTcpTemplateByDeviceId(String deviceId,int paramNum) {
         LambdaQueryWrapper<DeviceInstancesTcpTemplateEntity> objectLambdaQueryWrapper = new LambdaQueryWrapper<>();
         objectLambdaQueryWrapper.eq(DeviceInstancesTcpTemplateEntity::getDeviceId,deviceId);
+        objectLambdaQueryWrapper.eq(DeviceInstancesTcpTemplateEntity::getNum,paramNum);
         return this.getOne(objectLambdaQueryWrapper);
     }
 

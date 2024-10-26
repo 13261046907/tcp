@@ -71,12 +71,30 @@ public class TcpController {
     )
     @ResponseBody
     public R buildAcceptMsg(String channel,String hex) {
-        hex = "38363331323130373739313431393003030000000445EB030308010800B702E50042B207";
+        hex = "38363331323130373739313431393003030800BD00C5016E003ADF47";
         String modelId = "";
         String sendHex = "";
         String deviceAddress = "";
         String result = "";
-        if(hex.length() > 48){
+        if(hex.length() > 32) {
+            modelId = hex.substring(0, 30);
+            result = hex.substring(modelId.length());
+            deviceAddress = hex.substring(30, 32);
+            DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, null);
+            System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
+            if(!Objects.isNull(queryDeviceModel)){
+                queryDeviceModel.setChannel(channel);
+                deviceInstanceService.updateDeviceModelByDeviceId(channel,modelId,deviceAddress);
+            }else {
+                DeviceModel deviceModel = new DeviceModel();
+                deviceModel.setModelId(modelId);
+                deviceModel.setChannel(channel);
+                deviceModel.setDeviceAddress(deviceAddress);
+                deviceInstanceService.insertDeviceModel(deviceModel);
+            }
+        }
+        serverHandler.hexBuild(null,result);
+      /*  if(hex.length() > 48){
             modelId = hex.substring(0, 30);
             sendHex = hex.substring(30, 46);
             int index = hex.indexOf(modelId);
@@ -89,8 +107,8 @@ public class TcpController {
             result = hex.substring(modelId.length());
             deviceAddress = hex.substring(30, 32);
             System.out.println("perStr:"+modelId+"deviceAddress:"+deviceAddress+";result="+result);
-        }
-        if(StringUtils.isNotBlank(modelId) && StringUtils.isNotBlank(deviceAddress)){
+        }*/
+       /* if(StringUtils.isNotBlank(modelId) && StringUtils.isNotBlank(deviceAddress)){
             //根据4g模块和设备地址查询通道信息
             DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
             if(!Objects.isNull(queryDeviceModel)){
@@ -108,7 +126,7 @@ public class TcpController {
             if(StringUtils.isNotBlank(deviceId)){
                 serverHandler.hexBuild(deviceId,result);
             }
-        }
+        }*/
         return R.ok();
     }
 }

@@ -24,10 +24,7 @@ import org.springframework.util.CollectionUtils;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -135,7 +132,27 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 String deviceAddress = "";
                 String result = "";
                 String deviceId = "";
-                if(hex.length() > 48){
+                if(hex.length() > 32) {
+                    modelId = hex.substring(0, 30);
+                    result = hex.substring(modelId.length());
+                    deviceAddress = hex.substring(30, 32);
+                    DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, null);
+                    System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
+                    if(!Objects.isNull(queryDeviceModel)){
+                        queryDeviceModel.setChannel(channelId);
+                        deviceInstanceService.updateDeviceModelByDeviceId(channelId,modelId,deviceAddress);
+                    }else {
+                        DeviceModel deviceModel = new DeviceModel();
+                        deviceModel.setModelId(modelId);
+                        deviceModel.setChannel(channelId);
+                        deviceModel.setDeviceAddress(deviceAddress);
+                        deviceInstanceService.insertDeviceModel(deviceModel);
+                    }
+                }
+                deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
+                System.out.println("deviceId:"+deviceId+";result="+result);
+                hexBuild(deviceId,result);
+                /*if(hex.length() > 48){
                     modelId = hex.substring(0, 30);
                     sendHex = hex.substring(30, 46);
                     int index = hex.indexOf(modelId);
@@ -172,7 +189,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     if(StringUtils.isNotBlank(deviceId)){
                         hexBuild(deviceId,result);
                     }
-                }
+                }*/
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -309,11 +326,14 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void hexBuild(String deviceId,String convertedHexString){
-        Integer deviceType = 0;
+        Integer deviceType = 1;
         Integer startFunction = 4;
         log.info("sendHex:{}",convertedHexString);
         //根据id出现tcp模版表crc是否存在
-        DeviceInstancesTcpTemplateEntity tcpTemplateByDeviceId = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId);
+        String registerAddress = "";
+        Integer substring = Integer.valueOf(convertedHexString.substring(5, 6)); // 提取单个字符
+        int paramNum = substring / 2;
+        DeviceInstancesTcpTemplateEntity tcpTemplateByDeviceId = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId,paramNum);
         if(!Objects.isNull(tcpTemplateByDeviceId)){
             deviceType = tcpTemplateByDeviceId.getDeviceType();
             String isPrefix = tcpTemplateByDeviceId.getIsPrefix();
@@ -360,12 +380,20 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
+                if(paramNum ==3){
+                    propertiesList = getLastThree(propertiesList,paramNum);
+                }else if(paramNum ==4){
+                    propertiesList = getFirstThree(propertiesList,paramNum);
+                }
                 startFunction = propertiesList.size();
+                if(paramNum != 0){
+                    startFunction = paramNum;
+                }
                 List<String> hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsList);
                 log.info("hexList:{}", JSONObject.toJSONString(hexList));
                 if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
                     List<DeriveMetadataValueVo> deriveMetadataValueVos = new ArrayList<>();
-                    for (int i = 0; i < propertiesList.size(); i++) { // Adjust t
+                    for (int i = 0; i < hexList.size(); i++) { // Adjust t
                         ProductProperties productProperties = propertiesList.get(i);
                         DeriveMetadataValueVo deriveMetadataValueVo = new DeriveMetadataValueVo();
                         deriveMetadataValueVo.setType(productProperties.getId());
@@ -375,10 +403,47 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                     String deriveMetadataValue = JSONArray.toJSONString(deriveMetadataValueVos);
                     log.info(JSONObject.toJSONString(deriveMetadataValue));
-                    //update 数据库
-                    deviceInstanceService.updateDeriveMetadataValueById(deriveMetadataValue,deviceId);
+                    String queryMataDataValue = deviceInstanceService.selectMataDataValueById(deviceId);
+                    List<DeriveMetadataValueVo> queryData = new ArrayList<>();
+                    if(StringUtils.isNotBlank(queryMataDataValue)) {
+                        queryData = JSONArray.parseArray(queryMataDataValue, DeriveMetadataValueVo.class);
+                        deriveMetadataValueVos.addAll(queryData);
+                    }
+                        // 创建一个 Map 来存储最新的 SensorData
+                        Map<String, DeriveMetadataValueVo> latestDataMap = new HashMap<>();
+
+                        // 遍历列表并根据 type 和 updateTime 更新最新值
+                        for (DeriveMetadataValueVo data : deriveMetadataValueVos) {
+                            // 将 long 类型的时间戳转换为 Date
+                            Date updateTime = data.getUpdateTime();
+                            data.setUpdateTime(updateTime);
+                            // 如果该 type 不在 Map 中，或者 updateTime 更新，则替换
+                            if (!latestDataMap.containsKey(data.getType()) ||
+                                    latestDataMap.get(data.getType()).getUpdateTime().compareTo(data.getUpdateTime()) < 0) {
+                                latestDataMap.put(data.getType(), data);
+                            }
+                        }
+                        // 获取最终结果列表
+                        List<DeriveMetadataValueVo> resultList = new ArrayList<>(latestDataMap.values());
+                        //update 数据库
+                        deviceInstanceService.updateDeriveMetadataValueById(JSONObject.toJSONString(resultList),deviceId);
+                    }
                 }
             }
+    }
+
+    public static List<ProductProperties> getLastThree(List<ProductProperties> list,Integer paramNum) {
+        int size = list.size();
+        if (size <= paramNum) {
+            return new ArrayList<>(list); // 如果列表少于等于3个元素，返回全部
+        } else {
+            return new ArrayList<>(list.subList(size - paramNum, size)); // 返回最后三个元素
         }
+    }
+
+    public static List<ProductProperties> getFirstThree(List<ProductProperties> list,Integer size) {
+        // 确保返回不超过原列表大小的元素
+        size = Math.min(list.size(), size);
+        return new ArrayList<>(list.subList(0, size)); // 返回前 3 个元素，或原列表的所有元素（如果不足3）
     }
 }
