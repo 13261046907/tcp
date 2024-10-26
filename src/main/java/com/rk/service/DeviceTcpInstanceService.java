@@ -3,6 +3,8 @@ package com.rk.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.rk.domain.DeviceInstancesTcpTemplateEntity;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -13,7 +15,7 @@ import com.rk.domain.DeviceInstancesTcpTemplateEntity;
  */
 public interface DeviceTcpInstanceService extends IService<DeviceInstancesTcpTemplateEntity> {
 
-    DeviceInstancesTcpTemplateEntity findTcpTemplateByDeviceId(String deviceId,int paramNum);
+    List<DeviceInstancesTcpTemplateEntity> findTcpTemplateByDeviceId(String deviceId, int paramNum);
 
     DeviceInstancesTcpTemplateEntity findDeviceInstanceTcpTemplateByCrc(String hexCrx);
 

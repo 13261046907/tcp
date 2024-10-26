@@ -329,31 +329,31 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         Integer deviceType = 1;
         Integer startFunction = 4;
         log.info("sendHex:{}",convertedHexString);
-        //根据id出现tcp模版表crc是否存在
-        String registerAddress = "";
-        Integer substring = Integer.valueOf(convertedHexString.substring(5, 6)); // 提取单个字符
-        int paramNum = substring / 2;
-        DeviceInstancesTcpTemplateEntity tcpTemplateByDeviceId = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId,paramNum);
-        if(!Objects.isNull(tcpTemplateByDeviceId)){
-            deviceType = tcpTemplateByDeviceId.getDeviceType();
-            String isPrefix = tcpTemplateByDeviceId.getIsPrefix();
-            if("0".equals(isPrefix)){
-                //不带发送指令,直接解析不需要截取
-                deviceId = tcpTemplateByDeviceId.getDeviceId();
+        int paramNum = 0;
+        List<DeviceInstancesTcpTemplateEntity> tcpTemplateByDeviceIds = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId,paramNum);
+        if(!CollectionUtils.isEmpty(tcpTemplateByDeviceIds)){
+            DeviceInstancesTcpTemplateEntity tcpTemplateByDeviceId = tcpTemplateByDeviceIds.get(0);
+            if(!Objects.isNull(tcpTemplateByDeviceId)){
                 deviceType = tcpTemplateByDeviceId.getDeviceType();
-            }else {
-                String sendHex = convertedHexString.substring(0,16);
-                DeviceInstancesTcpTemplateEntity deviceInstancesTcpTemplateEntity = deviceTcpInstanceService.findDeviceInstanceTcpTemplateByCrc(sendHex);
-                log.info("deviceInstancesTcpTemplateEntity:{}", JSONObject.toJSONString(deviceInstancesTcpTemplateEntity));
-                if(!Objects.isNull(deviceInstancesTcpTemplateEntity)){
-                    //tcp协议解析
-                    deviceId = deviceInstancesTcpTemplateEntity.getDeviceId();
-                    deviceType = deviceInstancesTcpTemplateEntity.getDeviceType();
-                    // 查找 bb 在 aa 中的起始位置
-                    int index = convertedHexString.indexOf(sendHex);
-                    // 生成最新的
-                    convertedHexString = convertedHexString.substring(index + sendHex.length());
-                    log.info("tcp协议convertedHexString:{},deviceId:{},deviceType:{}",convertedHexString,deviceId,deviceType);
+                String isPrefix = tcpTemplateByDeviceId.getIsPrefix();
+                if("0".equals(isPrefix)){
+                    //不带发送指令,直接解析不需要截取
+                    deviceId = tcpTemplateByDeviceId.getDeviceId();
+                    deviceType = tcpTemplateByDeviceId.getDeviceType();
+                }else {
+                    String sendHex = convertedHexString.substring(0,16);
+                    DeviceInstancesTcpTemplateEntity deviceInstancesTcpTemplateEntity = deviceTcpInstanceService.findDeviceInstanceTcpTemplateByCrc(sendHex);
+                    log.info("deviceInstancesTcpTemplateEntity:{}", JSONObject.toJSONString(deviceInstancesTcpTemplateEntity));
+                    if(!Objects.isNull(deviceInstancesTcpTemplateEntity)){
+                        //tcp协议解析
+                        deviceId = deviceInstancesTcpTemplateEntity.getDeviceId();
+                        deviceType = deviceInstancesTcpTemplateEntity.getDeviceType();
+                        // 查找 bb 在 aa 中的起始位置
+                        int index = convertedHexString.indexOf(sendHex);
+                        // 生成最新的
+                        convertedHexString = convertedHexString.substring(index + sendHex.length());
+                        log.info("tcp协议convertedHexString:{},deviceId:{},deviceType:{}",convertedHexString,deviceId,deviceType);
+                    }
                 }
             }
         }
@@ -380,14 +380,20 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
-                if(paramNum ==3){
-                    propertiesList = getLastThree(propertiesList,paramNum);
-                }else if(paramNum ==4){
-                    propertiesList = getFirstThree(propertiesList,paramNum);
-                }
-                startFunction = propertiesList.size();
+                Integer substring = Integer.valueOf(convertedHexString.substring(5, 6)); // 提取单个字符
+                paramNum = substring / 2;
                 if(paramNum != 0){
-                    startFunction = paramNum;
+                    List<DeviceInstancesTcpTemplateEntity> tcpTemplateByDeviceIdOne = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId,paramNum);
+                    if(!CollectionUtils.isEmpty(tcpTemplateByDeviceIdOne) && tcpTemplateByDeviceIds.size() ==2){
+                        Integer num = tcpTemplateByDeviceIdOne.get(0).getNum();
+                        if(paramNum == 3){
+                            propertiesList = getLastThree(propertiesList,paramNum);
+                            startFunction = paramNum;
+                        }else if(paramNum ==4){
+                            propertiesList = getFirstThree(propertiesList,paramNum);
+                            startFunction = paramNum;
+                        }
+                    }
                 }
                 List<String> hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsList);
                 log.info("hexList:{}", JSONObject.toJSONString(hexList));
@@ -411,7 +417,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                         // 创建一个 Map 来存储最新的 SensorData
                         Map<String, DeriveMetadataValueVo> latestDataMap = new HashMap<>();
-
                         // 遍历列表并根据 type 和 updateTime 更新最新值
                         for (DeriveMetadataValueVo data : deriveMetadataValueVos) {
                             // 将 long 类型的时间戳转换为 Date

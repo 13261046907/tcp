@@ -113,7 +113,7 @@ public class DeviceInstancesTcpTemplateEntity implements Serializable {
     private String title;
 
     @TableField( "num")
-    private String num;
+    private Integer num;
 
     @TableField( "create_time")
     private String createTime;
