@@ -47,4 +47,8 @@
         insert into dev_device_model(model_id, device_address, channel)
         values (#{modelId}, #{deviceAddress}, #{channel})
     </insert>
+    <insert id="insertDeviceProperty" keyProperty="id" useGeneratedKeys="true">
+        insert into dev_device_property(device_id, property,value)
+        values (#{deviceId}, #{property},#{value})
+    </insert>
 </mapper>

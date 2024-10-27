@@ -4,10 +4,7 @@ import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
-import com.rk.domain.DeriveMetadataValueVo;
-import com.rk.domain.DeviceInstancesTcpTemplateEntity;
-import com.rk.domain.DeviceModel;
-import com.rk.domain.ProductProperties;
+import com.rk.domain.*;
 import com.rk.service.DeviceInstanceService;
 import com.rk.service.DeviceTcpInstanceService;
 import io.netty.buffer.ByteBuf;
@@ -399,6 +396,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 log.info("hexList:{}", JSONObject.toJSONString(hexList));
                 if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
                     List<DeriveMetadataValueVo> deriveMetadataValueVos = new ArrayList<>();
+                    List<DeviceProperty> devicePropertyList = new ArrayList<>();
                     for (int i = 0; i < hexList.size(); i++) { // Adjust t
                         ProductProperties productProperties = propertiesList.get(i);
                         DeriveMetadataValueVo deriveMetadataValueVo = new DeriveMetadataValueVo();
@@ -406,6 +404,12 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deriveMetadataValueVo.setValue(hexList.get(i));
                         deriveMetadataValueVo.setUpdateTime(new Date());
                         deriveMetadataValueVos.add(deriveMetadataValueVo);
+                        //保存属性表
+                        DeviceProperty deviceProperty = new DeviceProperty();
+                        deviceProperty.setDeviceId(deviceId);
+                        deviceProperty.setProperty(propertiesList.get(i).getId());
+                        deviceProperty.setValue(hexList.get(i));
+                        deviceInstanceService.insertDeviceProperty(deviceProperty);
                     }
                     String deriveMetadataValue = JSONArray.toJSONString(deriveMetadataValueVos);
                     log.info(JSONObject.toJSONString(deriveMetadataValue));

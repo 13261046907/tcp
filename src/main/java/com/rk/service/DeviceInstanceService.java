@@ -3,6 +3,7 @@ package com.rk.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
+import com.rk.domain.DeviceProperty;
 
 /**
  * <p>
@@ -27,6 +28,8 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
     DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress);
 
     void insertDeviceModel(DeviceModel deviceModel);
+
+    void insertDeviceProperty(DeviceProperty deviceProperty);
 
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 

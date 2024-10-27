@@ -3,6 +3,7 @@ package com.rk.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
+import com.rk.domain.DeviceProperty;
 
 
 /**
@@ -32,5 +33,7 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
     void  updateDeviceModelByDeviceId(String channel,String modelId,String deviceAddress);
 
     void insertDeviceModel(DeviceModel deviceModel);
+
+    void insertDeviceProperty(DeviceProperty deviceProperty);
 
 }
