@@ -133,7 +133,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     modelId = hex.substring(0, 30);
                     result = hex.substring(modelId.length());
                     deviceAddress = hex.substring(30, 32);
-                    DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, null);
+                    DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
                     System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
                     if(!Objects.isNull(queryDeviceModel)){
                         queryDeviceModel.setChannel(channelId);
@@ -401,6 +401,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         ProductProperties productProperties = propertiesList.get(i);
                         DeriveMetadataValueVo deriveMetadataValueVo = new DeriveMetadataValueVo();
                         deriveMetadataValueVo.setType(productProperties.getId());
+                        deriveMetadataValueVo.setName(productProperties.getName());
                         deriveMetadataValueVo.setValue(hexList.get(i));
                         deriveMetadataValueVo.setUpdateTime(new Date());
                         deriveMetadataValueVos.add(deriveMetadataValueVo);
