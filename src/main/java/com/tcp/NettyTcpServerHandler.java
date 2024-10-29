@@ -143,7 +143,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         if(StringUtils.isBlank(deviceId)){
                             //不带发送指令
                             deviceAddress = hex.substring(30, 32);
-                            deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
+                            deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
                         }else {
                             deviceAddress = hex.substring(46, 48);
                         }
@@ -157,7 +157,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         if(StringUtils.isBlank(deviceId)){
                             //不带发送指令
                             deviceAddress = hex.substring(28, 30);
-                            deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
+                            deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
                         }else {
                             deviceAddress = hex.substring(44, 46);
                         }

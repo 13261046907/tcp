@@ -115,6 +115,9 @@ public class DeviceInstancesTcpTemplateEntity implements Serializable {
     @TableField( "num")
     private Integer num;
 
+    @TableField("model_id")
+    private String modelId;
+
     @TableField( "create_time")
     private String createTime;
 

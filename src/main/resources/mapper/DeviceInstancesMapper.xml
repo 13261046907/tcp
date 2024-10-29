@@ -11,7 +11,7 @@
     </select>
 
     <select id="selectDeviceIdByAddress" resultType="java.lang.String">
-        select device_id from dev_device_instance_tcp_template where device_address=#{deviceAddress} limit 1;
+        select device_id from dev_device_instance_tcp_template where model_id=#{modelId} and device_address=#{deviceAddress} limit 1;
     </select>
 
     <select id="selectChannelByDeviceId" resultType="com.rk.domain.DeviceModel">

@@ -32,8 +32,8 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     }
 
     @Override
-    public String selectDeviceIdByAddress(String deviceAddress) {
-        return devDeviceInstanceMapper.selectDeviceIdByAddress(deviceAddress);
+    public String selectDeviceIdByAddress(String modelId,String deviceAddress) {
+        return devDeviceInstanceMapper.selectDeviceIdByAddress(modelId,deviceAddress);
     }
 
     @Override

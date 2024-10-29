@@ -21,7 +21,7 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
 
     String selectTcpTempBySendHex(String sendHex);
 
-    String selectDeviceIdByAddress(String deviceAddress);
+    String selectDeviceIdByAddress(String modelId,String deviceAddress);
 
     String selectTcpTempByDeviceAddress(String deviceAddress);
 
