@@ -21,7 +21,7 @@
                 and  channel = #{channelId}
             </if>
         </where>
-        limit 1
+        order by id desc limit 1
     </select>
 
     <select id="selectTcpTempBySendHex" resultType="java.lang.String">
