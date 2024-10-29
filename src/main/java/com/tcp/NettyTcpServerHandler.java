@@ -35,6 +35,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
     private final DeviceInstanceService deviceInstanceService;
 
     private final String tcpHeartbeat = "383633313231303737393134313930";
+    private final String tcpHeartbeat1 = "313431303334323238343334300D";
 
     // 构造函数注入RedisUtil
     public NettyTcpServerHandler(RedisUtil redisUtil, DeviceInstanceService deviceInstanceService, DeviceTcpInstanceService deviceTcpInstanceService) {
@@ -119,7 +120,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             String hex=  msg.toString().trim();
             log.info("加载客户端报文......");
             log.info("【" + channelId + "】" + " :" + hex);
-            if(tcpHeartbeat.equals(hex)){
+            if(tcpHeartbeat.equals(hex) || tcpHeartbeat1.equals(hex)){
                 return;
             }
             log.info("接收原始数据1:{}: " + hex);
@@ -130,10 +131,37 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 String result = "";
                 String deviceId = "";
                 if(hex.length() > 32) {
+                    DeviceModel queryDeviceModel = null;
                     modelId = hex.substring(0, 30);
-                    result = hex.substring(modelId.length());
-                    deviceAddress = hex.substring(30, 32);
-                    DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
+                    //根据modelId查询数据库是否存在
+                    queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
+                    if(!Objects.isNull(queryDeviceModel)){
+                        //截取前30位
+                        result = hex.substring(modelId.length());
+                        sendHex = hex.substring(30, 46);
+                        deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
+                        if(StringUtils.isBlank(deviceId)){
+                            //不带发送指令
+                            deviceAddress = hex.substring(30, 32);
+                            deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
+                        }else {
+                            deviceAddress = hex.substring(46, 48);
+                        }
+                    }else{
+                        modelId = hex.substring(0, 28);
+                        //根据modelId查询数据库是否存在
+                        queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
+                        result = hex.substring(modelId.length());
+                        sendHex = hex.substring(28, 44);
+                        deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
+                        if(StringUtils.isBlank(deviceId)){
+                            //不带发送指令
+                            deviceAddress = hex.substring(28, 30);
+                            deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
+                        }else {
+                            deviceAddress = hex.substring(44, 46);
+                        }
+                    }
                     System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
                     if(!Objects.isNull(queryDeviceModel)){
                         queryDeviceModel.setChannel(channelId);
@@ -146,8 +174,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deviceInstanceService.insertDeviceModel(deviceModel);
                     }
                 }
-                deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
-                System.out.println("deviceId:"+deviceId+";result="+result);
                 hexBuild(deviceId,result);
                 /*if(hex.length() > 48){
                     modelId = hex.substring(0, 30);
@@ -391,6 +417,9 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             startFunction = paramNum;
                         }
                     }
+                }
+                if(propertiesList.size() != 0){
+                    startFunction = propertiesList.size();
                 }
                 List<String> hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsList);
                 log.info("hexList:{}", JSONObject.toJSONString(hexList));
