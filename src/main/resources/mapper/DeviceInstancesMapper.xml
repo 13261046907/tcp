@@ -14,15 +14,11 @@
         select device_id from dev_device_instance_tcp_template where model_id=#{modelId} and device_address=#{deviceAddress} limit 1;
     </select>
 
-    <select id="selectChannelByDeviceId" resultType="com.rk.domain.DeviceModel">
-        SELECT DISTINCT channel FROM dev_device_model
+    <select id="selectDeviceModelByChannelId" resultType="com.rk.domain.DeviceModel">
+        SELECT id,model_id,device_address,channel FROM dev_device_model
         <where>
-            1=1
-            <if test="modelId != null and modelId != ''">
-                and  model_id = #{modelId}
-            </if>
-            <if test="deviceAddress != null and deviceAddress != ''">
-                and device_address = #{deviceAddress} ;
+            <if test="channelId != null and channelId != ''">
+                and  channel = #{channelId}
             </if>
         </where>
         limit 1
@@ -52,4 +48,7 @@
         insert into dev_device_property(device_id, property,value)
         values (#{deviceId}, #{property},#{value})
     </insert>
+    <delete id="deleteDeviceModelByChannelId">
+        delete  from  dev_device_model where channel = #{channelId};
+    </delete>
 </mapper>

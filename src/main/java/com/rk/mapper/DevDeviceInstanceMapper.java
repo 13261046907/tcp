@@ -26,7 +26,7 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
     String selectTcpTempByDeviceAddress(String deviceAddress);
 
-    DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress);
+    DeviceModel selectDeviceModelByChannelId(String channelId);
 
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 
@@ -35,5 +35,7 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
     void insertDeviceModel(DeviceModel deviceModel);
 
     void insertDeviceProperty(DeviceProperty deviceProperty);
+
+    void deleteDeviceModelByChannelId(String channelId);
 
 }

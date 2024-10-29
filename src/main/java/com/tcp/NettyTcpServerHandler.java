@@ -103,6 +103,13 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             log.info("客户端【" + channelId + "】退出netty服务器[IP:" + clientIp + "--->PORT:" + insocket.getPort() + "]");
             log.info("连接通道数量: " + CHANNEL_MAP.size());
         }
+
+        //根据chanelID查询4g模块关系
+        String channel = channelId+"";
+        DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channel);
+        if(!Objects.isNull(queryDeviceModel)){
+            deviceInstanceService.deleteDeviceModelByChannelId(channel);
+        }
         log.info("下线或者强制退出时触发：" + ctx.channel().remoteAddress());
         ctx.close();
     }
@@ -120,99 +127,35 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             String hex=  msg.toString().trim();
             log.info("加载客户端报文......");
             log.info("【" + channelId + "】" + " :" + hex);
-            if(tcpHeartbeat.equals(hex) || tcpHeartbeat1.equals(hex)){
+            //根据chanelID查询4g模块关系
+            DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channelId);
+            if(Objects.isNull(queryDeviceModel)){
+                DeviceModel deviceModel = new DeviceModel();
+                deviceModel.setModelId(hex);
+                deviceModel.setChannel(channelId);
+                deviceInstanceService.insertDeviceModel(deviceModel);
                 return;
             }
             log.info("接收原始数据1:{}: " + hex);
             try {
-                String modelId = "";
-                String sendHex = "";
-                String deviceAddress = "";
-                String result = "";
-                String deviceId = "";
-                if(hex.length() > 32) {
-                    DeviceModel queryDeviceModel = null;
-                    modelId = hex.substring(0, 30);
-                    //根据modelId查询数据库是否存在
-                    queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
-                    if(!Objects.isNull(queryDeviceModel)){
-                        //截取前30位
-                        result = hex.substring(modelId.length());
-                        sendHex = hex.substring(30, 46);
-                        deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
-                        if(StringUtils.isBlank(deviceId)){
-                            //不带发送指令
-                            deviceAddress = hex.substring(30, 32);
-                            deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
-                        }else {
-                            deviceAddress = hex.substring(46, 48);
-                        }
-                    }else{
-                        modelId = hex.substring(0, 28);
-                        //根据modelId查询数据库是否存在
-                        queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
-                        result = hex.substring(modelId.length());
-                        sendHex = hex.substring(28, 44);
-                        deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
-                        if(StringUtils.isBlank(deviceId)){
-                            //不带发送指令
-                            deviceAddress = hex.substring(28, 30);
-                            deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
-                        }else {
-                            deviceAddress = hex.substring(44, 46);
-                        }
-                    }
-                    System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
-                    if(!Objects.isNull(queryDeviceModel)){
-                        queryDeviceModel.setChannel(channelId);
-                        deviceInstanceService.updateDeviceModelByDeviceId(channelId,modelId,deviceAddress);
-                    }else {
-                        DeviceModel deviceModel = new DeviceModel();
-                        deviceModel.setModelId(modelId);
-                        deviceModel.setChannel(channelId);
-                        deviceModel.setDeviceAddress(deviceAddress);
-                        deviceInstanceService.insertDeviceModel(deviceModel);
-                    }
-                }
-                hexBuild(deviceId,result);
-                /*if(hex.length() > 48){
-                    modelId = hex.substring(0, 30);
-                    sendHex = hex.substring(30, 46);
-                    int index = hex.indexOf(modelId);
-                    result = hex.substring(index + modelId.length());
-                    deviceAddress = hex.substring(46, 48);
-                    System.out.println("perStr:"+modelId+"deviceAddress:"+deviceAddress+";sendHex:"+sendHex+";result="+result);
-                }else if(hex.length() > 32){
-                    //不带发送指令
-                    modelId = hex.substring(0, 30);
-                    result = hex.substring(modelId.length());
-                    deviceAddress = hex.substring(30, 32);
-                    System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
-                }
-                if(StringUtils.isNotBlank(modelId) && StringUtils.isNotBlank(deviceAddress)){
-                    //根据4g模块和设备地址查询通道信息
-                    DeviceModel queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
-                    if(!Objects.isNull(queryDeviceModel)){
-                        queryDeviceModel.setChannel(channelId);
-                        deviceInstanceService.updateDeviceModelByDeviceId(channelId,modelId,deviceAddress);
-                    }else {
-                        DeviceModel deviceModel = new DeviceModel();
-                        deviceModel.setModelId(modelId);
-                        deviceModel.setChannel(channelId);
-                        deviceModel.setDeviceAddress(deviceAddress);
-                        deviceInstanceService.insertDeviceModel(deviceModel);
-                    }
-                    //不带发送指令,地址码查询
-                    deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
+                if(!Objects.isNull(queryDeviceModel)){
+                    String modelId = queryDeviceModel.getModelId();
+                    String deviceAddress = "";
+                    int preModelLength = modelId.length();
+                    String result = hex.substring(preModelLength);
+                    int endCRC = preModelLength + 16;
+                    String sendHex = hex.substring(preModelLength, endCRC);
+                    String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
                     if(StringUtils.isBlank(deviceId)){
-                        //根据地址码查询设备id
-                        deviceId = deviceInstanceService.selectDeviceIdByAddress(deviceAddress);
+                        //不带发送指令
+                        deviceAddress = hex.substring(preModelLength, preModelLength+2);
+                        deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
+                    }else {
+                        deviceAddress = hex.substring(endCRC, endCRC+2);
                     }
-                    //根据sendHex查询数据库是否存在
-                    if(StringUtils.isNotBlank(deviceId)){
-                        hexBuild(deviceId,result);
-                    }
-                }*/
+                    System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
+                    hexBuild(deviceId,result);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -341,8 +284,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-
-        System.out.println();
         ctx.close();
         log.info(ctx.channel().id() + " 发生了错误,此连接被关闭" + "此时连通数量: " + CHANNEL_MAP.size());
         //cause.printStackTrace();
@@ -403,7 +344,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
-                Integer substring = Integer.valueOf(convertedHexString.substring(5, 6)); // 提取单个字符
+                Integer substring = Integer.valueOf(convertedHexString.substring(4, 6)); // 提取单个字符
                 paramNum = substring / 2;
                 if(paramNum != 0){
                     List<DeviceInstancesTcpTemplateEntity> tcpTemplateByDeviceIdOne = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId,paramNum);

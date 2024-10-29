@@ -37,12 +37,8 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     }
 
     @Override
-    public String selectTcpTempByDeviceAddress(String deviceAddress) {
-        return devDeviceInstanceMapper.selectTcpTempByDeviceAddress(deviceAddress);
-    }
-    @Override
-    public DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress) {
-        return devDeviceInstanceMapper.selectChannelByDeviceId(modelId,deviceAddress);
+    public DeviceModel selectDeviceModelByChannelId(String channelId) {
+        return devDeviceInstanceMapper.selectDeviceModelByChannelId(channelId);
     }
 
     @Override
@@ -61,8 +57,7 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     }
 
     @Override
-    public void updateDeviceModelByDeviceId(String channel,String modelId,String deviceAddress) {
-        devDeviceInstanceMapper.updateDeviceModelByDeviceId(channel,modelId,deviceAddress);
+    public void deleteDeviceModelByChannelId(String channelId) {
+        devDeviceInstanceMapper.deleteDeviceModelByChannelId(channelId);
     }
-
 }

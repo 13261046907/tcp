@@ -74,56 +74,34 @@ public class TcpController {
     )
     @ResponseBody
     public R buildAcceptMsg(String channel,String hex) {
-        String modelId = "";
-        String sendHex = "";
-        String deviceAddress = "";
-        String result = "";
-        String deviceId = "";
-        if(hex.length() > 32) {
-            DeviceModel queryDeviceModel = null;
-            modelId = hex.substring(0, 30);
-            //根据modelId查询数据库是否存在
-            queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
-            if(!Objects.isNull(queryDeviceModel)){
-                //截取前30位
-                result = hex.substring(modelId.length());
-                sendHex = hex.substring(30, 46);
-                deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
-                if(StringUtils.isBlank(deviceId)){
-                    //不带发送指令
-                    deviceAddress = hex.substring(30, 32);
-                    deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
-                }else {
-                    deviceAddress = hex.substring(46, 48);
-                }
-            }else{
-                modelId = hex.substring(0, 28);
-                //根据modelId查询数据库是否存在
-                queryDeviceModel = deviceInstanceService.selectChannelByDeviceId(modelId, deviceAddress);
-                result = hex.substring(modelId.length());
-                sendHex = hex.substring(28, 44);
-                deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
-                if(StringUtils.isBlank(deviceId)){
-                    //不带发送指令
-                    deviceAddress = hex.substring(28, 30);
-                    deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
-                }else {
-                    deviceAddress = hex.substring(44, 46);
-                }
+        log.info("【" + channel + "】" + " :" + hex);
+        //根据chanelID查询4g模块关系
+        DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channel);
+        if(Objects.isNull(queryDeviceModel)){
+            DeviceModel deviceModel = new DeviceModel();
+            deviceModel.setModelId(hex);
+            deviceModel.setChannel(channel);
+            deviceInstanceService.insertDeviceModel(deviceModel);
+        }
+        log.info("接收原始数据1:{}: " + hex);
+        if(!Objects.isNull(queryDeviceModel)){
+            String modelId = queryDeviceModel.getModelId();
+            String deviceAddress = "";
+            int preModelLength = modelId.length();
+            String result = hex.substring(preModelLength);
+            int endCRC = preModelLength + 16;
+            String sendHex = hex.substring(preModelLength, endCRC);
+            String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
+            if(StringUtils.isBlank(deviceId)){
+                //不带发送指令
+                deviceAddress = hex.substring(preModelLength, preModelLength+2);
+                deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
+            }else {
+                deviceAddress = hex.substring(endCRC, endCRC+2);
             }
             System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
-            if(!Objects.isNull(queryDeviceModel)){
-                queryDeviceModel.setChannel(channel);
-                deviceInstanceService.updateDeviceModelByDeviceId(channel,modelId,deviceAddress);
-            }else {
-                DeviceModel deviceModel = new DeviceModel();
-                deviceModel.setModelId(modelId);
-                deviceModel.setChannel(channel);
-                deviceModel.setDeviceAddress(deviceAddress);
-                deviceInstanceService.insertDeviceModel(deviceModel);
-            }
+            hexBuild(deviceId,result);
         }
-        serverHandler.hexBuild(deviceId,result);
       /*  if(hex.length() > 48){
             modelId = hex.substring(0, 30);
             sendHex = hex.substring(30, 46);

@@ -23,9 +23,7 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
 
     String selectDeviceIdByAddress(String modelId,String deviceAddress);
 
-    String selectTcpTempByDeviceAddress(String deviceAddress);
-
-    DeviceModel selectChannelByDeviceId(String modelId,String deviceAddress);
+    DeviceModel selectDeviceModelByChannelId(String channelId);
 
     void insertDeviceModel(DeviceModel deviceModel);
 
@@ -33,5 +31,5 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
 
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 
-    void updateDeviceModelByDeviceId(String channel,String modelId,String deviceAddress);
+    void deleteDeviceModelByChannelId(String channelId);
 }
