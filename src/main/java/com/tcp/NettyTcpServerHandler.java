@@ -4,6 +4,7 @@ import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
+import com.enums.PropertyUnitEnum;
 import com.rk.domain.*;
 import com.rk.service.DeviceInstanceService;
 import com.rk.service.DeviceTcpInstanceService;
@@ -142,19 +143,21 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     String modelId = queryDeviceModel.getModelId();
                     String deviceAddress = "";
                     int preModelLength = modelId.length();
-                    String result = hex.substring(preModelLength);
-                    int endCRC = preModelLength + 16;
-                    String sendHex = hex.substring(preModelLength, endCRC);
-                    String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
-                    if(StringUtils.isBlank(deviceId)){
-                        //不带发送指令
-                        deviceAddress = hex.substring(preModelLength, preModelLength+2);
-                        deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
-                    }else {
-                        deviceAddress = hex.substring(endCRC, endCRC+2);
+                    if(hex.length() >= preModelLength ){
+                        String result = hex.substring(preModelLength);
+                        int endCRC = preModelLength + 16;
+                        String sendHex = hex.substring(preModelLength, endCRC);
+                        String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
+                        if(StringUtils.isBlank(deviceId)){
+                            //不带发送指令
+                            deviceAddress = hex.substring(preModelLength, preModelLength+2);
+                            deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
+                        }else {
+                            deviceAddress = hex.substring(endCRC, endCRC+2);
+                        }
+                        System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
+                        hexBuild(deviceId,result);
                     }
-                    System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
-                    hexBuild(deviceId,result);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -368,18 +371,56 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     List<DeriveMetadataValueVo> deriveMetadataValueVos = new ArrayList<>();
                     List<DeviceProperty> devicePropertyList = new ArrayList<>();
                     for (int i = 0; i < hexList.size(); i++) { // Adjust t
+                        //保存属性表
+                        DeviceProperty deviceProperty = new DeviceProperty();
                         ProductProperties productProperties = propertiesList.get(i);
                         DeriveMetadataValueVo deriveMetadataValueVo = new DeriveMetadataValueVo();
                         deriveMetadataValueVo.setType(productProperties.getId());
                         deriveMetadataValueVo.setName(productProperties.getName());
-                        deriveMetadataValueVo.setValue(hexList.get(i));
+                        if(PropertyUnitEnum.N.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.N.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.N.getValue());
+                        }
+                        if(PropertyUnitEnum.L.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.L.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.L.getValue());
+                        }
+                        if(PropertyUnitEnum.K.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.K.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.K.getValue());
+                        }
+                        if(PropertyUnitEnum.TEMPERATURE.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.TEMPERATURE.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.TEMPERATURE.getValue());
+                        }
+                        if(PropertyUnitEnum.HUMIDITY.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.HUMIDITY.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.HUMIDITY.getValue());
+                        }
+                        if(PropertyUnitEnum.EC.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.EC.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.EC.getValue());
+                        }
+                        if(PropertyUnitEnum.CO2.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.CO2.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.CO2.getValue());
+                        }
+                        if(PropertyUnitEnum.LIGHT.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.LIGHT.getValue());
+                            deviceProperty.setValue(hexList.get(i));
+                            deviceProperty.setUnit(PropertyUnitEnum.LIGHT.getValue());
+                        }
                         deriveMetadataValueVo.setUpdateTime(new Date());
                         deriveMetadataValueVos.add(deriveMetadataValueVo);
-                        //保存属性表
-                        DeviceProperty deviceProperty = new DeviceProperty();
                         deviceProperty.setDeviceId(deviceId);
                         deviceProperty.setProperty(propertiesList.get(i).getId());
-                        deviceProperty.setValue(hexList.get(i));
                         deviceInstanceService.insertDeviceProperty(deviceProperty);
                     }
                     String deriveMetadataValue = JSONArray.toJSONString(deriveMetadataValueVos);

@@ -21,6 +21,9 @@ public class DeviceProperty implements Serializable {
     @TableField("value")
     private String value;
 
+    @TableField("unit")
+    private String unit;
+
     @TableField("`timestamp`")
     private String timestamp;
 }

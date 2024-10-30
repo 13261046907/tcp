@@ -29,8 +29,8 @@ spring:
   datasource:
     name: jetlinks
     username: root
-    password: 3+PloXbwcM7+JA=
-    url: jdbc:mysql://101.201.119.26:30016/jetlinks?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
+    password: Aud1w1d2qfgd2QYFLUiNI3NNT+A0
+    url: jdbc:mysql://36.138.168.13:53306/jetlinks?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT%2b8
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 knife4j:

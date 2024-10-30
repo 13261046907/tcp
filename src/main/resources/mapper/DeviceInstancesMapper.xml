@@ -45,8 +45,8 @@
         values (#{modelId}, #{deviceAddress}, #{channel})
     </insert>
     <insert id="insertDeviceProperty" keyProperty="id" useGeneratedKeys="true">
-        insert into dev_device_property(device_id, property,value)
-        values (#{deviceId}, #{property},#{value})
+        insert into dev_device_property(device_id, property,value,unit)
+        values (#{deviceId}, #{property},#{value},#{unit})
     </insert>
     <delete id="deleteDeviceModelByChannelId">
         delete  from  dev_device_model where channel = #{channelId};
