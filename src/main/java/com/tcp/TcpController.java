@@ -99,7 +99,7 @@ public class TcpController {
             }else {
                 deviceAddress = hex.substring(endCRC, endCRC+2);
             }
-            System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
+            System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+modelId+";result="+result);
             hexBuild(deviceId,result);
         }
       /*  if(hex.length() > 48){

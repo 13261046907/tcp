@@ -155,7 +155,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         }else {
                             deviceAddress = hex.substring(endCRC, endCRC+2);
                         }
-                        System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";result="+result);
+                        System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+modelId+";result="+result);
                         hexBuild(deviceId,result);
                     }
                 }
@@ -379,47 +379,40 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deriveMetadataValueVo.setName(productProperties.getName());
                         if(PropertyUnitEnum.N.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.N.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.N.getValue());
                         }
                         if(PropertyUnitEnum.L.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.L.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.L.getValue());
                         }
                         if(PropertyUnitEnum.K.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.K.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.K.getValue());
                         }
                         if(PropertyUnitEnum.TEMPERATURE.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.TEMPERATURE.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.TEMPERATURE.getValue());
                         }
                         if(PropertyUnitEnum.HUMIDITY.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.HUMIDITY.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.HUMIDITY.getValue());
                         }
                         if(PropertyUnitEnum.EC.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.EC.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.EC.getValue());
                         }
                         if(PropertyUnitEnum.CO2.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.CO2.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.CO2.getValue());
                         }
                         if(PropertyUnitEnum.LIGHT.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.LIGHT.getValue());
-                            deviceProperty.setValue(hexList.get(i));
                             deviceProperty.setUnit(PropertyUnitEnum.LIGHT.getValue());
                         }
                         deriveMetadataValueVo.setUpdateTime(new Date());
                         deriveMetadataValueVos.add(deriveMetadataValueVo);
                         deviceProperty.setDeviceId(deviceId);
+                        deviceProperty.setValue(hexList.get(i));
                         deviceProperty.setProperty(propertiesList.get(i).getId());
                         deviceInstanceService.insertDeviceProperty(deviceProperty);
                     }
