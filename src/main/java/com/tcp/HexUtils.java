@@ -1,44 +1,44 @@
 package com.tcp;
 
-import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang.StringUtils;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class HexUtils {
-    public static List<String> getHexList(String convertedHexString, int num,List<Integer> metricsList){
+    public static List<String> getHexList(String convertedHexString, int num, Map<Integer,String> metricsMap){
         int startIndex = 6; // Starting index for the first humidity
         List<String> hexList = new ArrayList<>();
         int length = 4; // Length of each humidity substring
         for (int i = 0; i < num; i++) { // Adjust the loop count based on how many substrings you want
-            Boolean isMetrics = true;
-            if(metricsList.contains(i)){
-                //不需要除以10
-                isMetrics = false;
+            Boolean isMetrics = false;
+            String symbol = "";
+            String symbolValue = metricsMap.get(i);
+            if(StringUtils.isNotBlank(symbolValue)){
+                isMetrics = true;
+                symbol = symbolValue;
             }
             String hex= convertedHexString.substring(startIndex + (i * length), startIndex + ((i + 1) * length));
-            String hexStr = hexToStr(hex,isMetrics);
+            String hexStr = hexToStr(hex,isMetrics,symbol);
             hexList.add(hexStr);
         }
         return  hexList;
     }
 
-    public static String hexToStr(String hexValue, Boolean isMetrics){
+    public static String hexToStr(String hexValue, Boolean isMetrics,String symbol){
         int decValue = Integer.parseInt(hexValue, 16);
-        double dividedByTen = 0;
-        if(isMetrics){
-            dividedByTen = (double) decValue / 10.0;
+        String result = "";
+        if(isMetrics && StringUtils.isNotBlank(symbol)){
+            Object buildResult = ExpressionEvaluator.buildResult(decValue, symbol);
+            if(!Objects.isNull(buildResult)){
+                result = buildResult + "";
+            }
         }else {
-            dividedByTen = Double.valueOf(decValue);
+            result = String.valueOf(decValue);
         }
-        DecimalFormat df = new DecimalFormat("0.00");
-        String result = df.format(dividedByTen);
         return result;
     }
 
-    public static void main(String[] args) {
-        List<String> hexList = getHexList("03030800BD00C5016E003ADF47",2, new ArrayList<>());
-        System.out.println(hexList);
-    }
 }

@@ -328,8 +328,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             //属性设备
             String metadata = deviceInstanceService.selectMataDataById(deviceId);
             if (StringUtils.isNotBlank(metadata)) {
-                List<ProductProperties> propertiesList = new ArrayList<>();
-                List<Integer> metricsList = new ArrayList<>();
+                Map<Integer,String> metricsMap = new HashMap<>();
                 JSONObject metadataJson = JSONObject.parseObject(metadata);
                 JSONArray properties = metadataJson.getJSONArray("properties");
                 for (int i = 0; i < properties.size(); i++) {
@@ -341,12 +340,12 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             value = metrics.getJSONObject(0).getString("value");
                             if(StringUtils.isNotBlank(value)){
                                 //存在metrics,标记
-                                metricsList.add(i);
+                                metricsMap.put(i,value);
                             }
                         }
                     }
                 }
-                propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
+                List<ProductProperties> propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
                 Integer substring = Integer.valueOf(convertedHexString.substring(4, 6)); // 提取单个字符
                 paramNum = substring / 2;
                 if(paramNum != 0){
@@ -365,7 +364,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 if(propertiesList.size() != 0){
                     startFunction = propertiesList.size();
                 }
-                List<String> hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsList);
+                List<String> hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsMap);
                 log.info("hexList:{}", JSONObject.toJSONString(hexList));
                 if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
                     List<DeriveMetadataValueVo> deriveMetadataValueVos = new ArrayList<>();
@@ -377,6 +376,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         DeriveMetadataValueVo deriveMetadataValueVo = new DeriveMetadataValueVo();
                         deriveMetadataValueVo.setType(productProperties.getId());
                         deriveMetadataValueVo.setName(productProperties.getName());
+                        deriveMetadataValueVo.setValue(hexList.get(i));
                         if(PropertyUnitEnum.N.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.N.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.N.getValue());
