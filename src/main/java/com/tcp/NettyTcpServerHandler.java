@@ -362,7 +362,12 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 if(propertiesList.size() != 0){
                     startFunction = propertiesList.size();
                 }
-                List<String> hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsMap);
+                List<String> hexList = new ArrayList<>();
+                if(metadata.contains("co2")){
+                    hexList = HexUtils.getHexCo2List(convertedHexString, metricsMap);
+                }else {
+                    hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsMap);
+                }
                 log.info("hexList:{}", JSONObject.toJSONString(hexList));
                 if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
                     List<DeriveMetadataValueVo> deriveMetadataValueVos = new ArrayList<>();

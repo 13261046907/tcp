@@ -1,5 +1,6 @@
 package com.tcp;
 
+import cn.hutool.core.collection.CollectionUtil;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -41,4 +42,67 @@ public class HexUtils {
         return result;
     }
 
+    public static List<String> getHexCo2List(String hexString, Map<Integer, String> metricsMap){
+        // 按4个字节分割字符串
+        hexString = hexString.substring(6);
+        String[] dataChunks = splitIntoChunks(hexString, 4);
+        // 读取所需的数据
+        Integer humidity = Integer.parseInt(dataChunks[0], 16); // 湿度，字符串转十六进制转换为十进制
+        Integer temperature = Integer.parseInt(dataChunks[1], 16); // 温度
+        Integer co2 = Integer.parseInt(dataChunks[5], 16); // CO2
+        Integer light = Integer.parseInt(dataChunks[8], 16) + Integer.parseInt(dataChunks[9], 16); // 光照
+        List<Integer> hexList = new ArrayList<>();
+        hexList.add(humidity);
+        hexList.add(temperature);
+        hexList.add(co2);
+        hexList.add(light);
+        List<String> hexLists = new ArrayList<>();
+        if(CollectionUtil.isNotEmpty(hexList)){
+            for (int i = 0; i < hexList.size(); i++) {
+                String result = hexList.get(i) +"";
+                String symbolValue = metricsMap.get(i);
+                if(StringUtils.isNotBlank(result)){
+                    if(StringUtils.isNotBlank(symbolValue)){
+                        Object buildResult = ExpressionEvaluator.buildResult(hexList.get(i), symbolValue);
+                        if(!Objects.isNull(buildResult)){
+                            result = buildResult + "";
+                        }
+                    }
+                    hexLists.add(result);
+                }
+            }
+        }
+        return hexLists;
+    }
+
+    public static void main(String[] args) {
+        String aa = "012300B5000000000000021E00000000006040C3";
+
+        // 按4个字节分割字符串
+        String[] dataChunks = splitIntoChunks(aa, 4);
+
+        // 读取所需的数据
+        int humidity = Integer.parseInt(dataChunks[0], 16); // 湿度，字符串转十六进制转换为十进制
+        int temperature = Integer.parseInt(dataChunks[1], 16); // 温度
+        int co2 = Integer.parseInt(dataChunks[5], 16); // CO2
+        int light = Integer.parseInt(dataChunks[8], 16) + Integer.parseInt(dataChunks[9], 16); // 光照
+
+        // 输出结果
+        System.out.println("湿度: " + humidity);
+        System.out.println("温度: " + temperature);
+        System.out.println("CO2: " + co2);
+        System.out.println("光照: " + light);
+    }
+
+
+    private static String[] splitIntoChunks(String str, int chunkSize) {
+        int numChunks = (int) Math.ceil((double) str.length() / chunkSize);
+        String[] chunks = new String[numChunks];
+
+        for (int i = 0; i < numChunks; i++) {
+            int endIndex = Math.min(str.length(), (i + 1) * chunkSize);
+            chunks[i] = str.substring(i * chunkSize, endIndex);
+        }
+        return chunks;
+    }
 }
