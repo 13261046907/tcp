@@ -349,9 +349,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 Integer substring = Integer.valueOf(convertedHexString.substring(4, 6)); // 提取单个字符
                 paramNum = substring / 2;
                 if(paramNum != 0){
-                    List<DeviceInstancesTcpTemplateEntity> tcpTemplateByDeviceIdOne = deviceTcpInstanceService.findTcpTemplateByDeviceId(deviceId,paramNum);
-                    if(!CollectionUtils.isEmpty(tcpTemplateByDeviceIdOne) && tcpTemplateByDeviceIds.size() ==2){
-                        Integer num = tcpTemplateByDeviceIdOne.get(0).getNum();
+                    if(tcpTemplateByDeviceIds.size() ==2){
                         if(paramNum == 3){
                             propertiesList = getLastThree(propertiesList,paramNum);
                             startFunction = paramNum;
