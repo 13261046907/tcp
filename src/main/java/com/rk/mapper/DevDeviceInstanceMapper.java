@@ -5,6 +5,8 @@ import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
 import com.rk.domain.DeviceProperty;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -24,9 +26,15 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
     String selectDeviceIdByAddress(String modelId,String deviceAddress);
 
+    String selectProductIdByDeviceId(String deviceId);
+
+    List<String> selectDeviceIdByModelId(String modelId);
+
+    List<DeviceModel> selectAllTcpTemp();
+
     String selectTcpTempByDeviceAddress(String deviceAddress);
 
-    DeviceModel selectDeviceModelByChannelId(String channelId);
+    DeviceModel selectDeviceModelByChannelId(String channelId,String modelId);
 
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 
@@ -38,4 +46,7 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
     void deleteDeviceModelByChannelId(String channelId);
 
+    void updateDeviceStateByDeviceId(String state,String deviceId);
+
+    void updateProductStateByProductId(String state,String productId);
 }

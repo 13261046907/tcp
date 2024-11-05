@@ -4,6 +4,7 @@ import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
+import com.enums.DeviceStateEnum;
 import com.enums.PropertyUnitEnum;
 import com.rk.domain.*;
 import com.rk.service.DeviceInstanceService;
@@ -74,7 +75,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         } else {
             //保存连接
             CHANNEL_MAP.put(channelId+"", ctx);
-
             log.info("客户端【" + channelId + "】连接netty服务器[IP:" + clientIp + "--->PORT:" + clientPort + "]");
             log.info("连接通道数量: " + CHANNEL_MAP.size());
         }
@@ -107,9 +107,18 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
 
         //根据chanelID查询4g模块关系
         String channel = channelId+"";
-        DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channel);
+        DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channel,null);
         if(!Objects.isNull(queryDeviceModel)){
             deviceInstanceService.deleteDeviceModelByChannelId(channel);
+            //todo 修改设备和产品下线
+            List<String> deviceIdList = deviceInstanceService.selectDeviceIdByModelId(queryDeviceModel.getModelId());
+            if(!CollectionUtils.isEmpty(deviceIdList)){
+                deviceIdList.stream().forEach(deviceId ->{
+                    deviceInstanceService.updateDeviceStateByDeviceId(DeviceStateEnum.offline.getValue(),deviceId);
+                    String productId = deviceInstanceService.selectProductIdByDeviceId(deviceId);
+                    deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.offline.getName(),productId);
+                });
+            }
         }
         log.info("下线或者强制退出时触发：" + ctx.channel().remoteAddress());
         ctx.close();
@@ -129,7 +138,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             log.info("加载客户端报文......");
             log.info("【" + channelId + "】" + " :" + hex);
             //根据chanelID查询4g模块关系
-            DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channelId);
+            DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channelId,null);
             if(Objects.isNull(queryDeviceModel)){
                 DeviceModel deviceModel = new DeviceModel();
                 deviceModel.setModelId(hex);
@@ -155,7 +164,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         }else {
                             deviceAddress = hex.substring(endCRC, endCRC+2);
                         }
-                        System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+modelId+";result="+result);
+                        System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+deviceId+";result="+result);
                         hexBuild(deviceId,result);
                     }
                 }
@@ -231,6 +240,20 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         try{
             if (ctx == null) {
                 log.info("通道【" + channelId + "】不存在");
+                //todo 下限对应的产品和设备
+                DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channelId,null);
+                if(!Objects.isNull(queryDeviceModel)){
+                    deviceInstanceService.deleteDeviceModelByChannelId(channelId);
+                    //todo 修改设备和产品下线
+                    List<String> deviceIdList = deviceInstanceService.selectDeviceIdByModelId(queryDeviceModel.getModelId());
+                    if(!CollectionUtils.isEmpty(deviceIdList)){
+                        deviceIdList.stream().forEach(deviceId ->{
+                            deviceInstanceService.updateDeviceStateByDeviceId(DeviceStateEnum.offline.getValue(),deviceId);
+                            String productId = deviceInstanceService.selectProductIdByDeviceId(deviceId);
+                            deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.offline.getName(),productId);
+                        });
+                    }
+                }
                 return;
             }
             if (msg == null && msg == "") {
@@ -323,6 +346,11 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
             }
+        }
+        if(StringUtils.isNotBlank(deviceId)){
+            deviceInstanceService.updateDeviceStateByDeviceId(DeviceStateEnum.online.getValue(),deviceId);
+            String productId = deviceInstanceService.selectProductIdByDeviceId(deviceId);
+            deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.online.getName(),productId);
         }
         if (1 == deviceType) {
             //属性设备

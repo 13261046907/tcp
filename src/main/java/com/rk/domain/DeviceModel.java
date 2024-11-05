@@ -23,4 +23,8 @@ public class DeviceModel implements Serializable {
 
     @TableField("`is_prefix`")
     private String isPrefix;
+
+    private String instructionCrc;
+
+    private String deviceId;
 }

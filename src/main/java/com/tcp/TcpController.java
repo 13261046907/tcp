@@ -76,7 +76,7 @@ public class TcpController {
     public R buildAcceptMsg(String channel,String hex) {
         log.info("【" + channel + "】" + " :" + hex);
         //根据chanelID查询4g模块关系
-        DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channel);
+        DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channel,null);
         if(Objects.isNull(queryDeviceModel)){
             DeviceModel deviceModel = new DeviceModel();
             deviceModel.setModelId(hex);
@@ -88,19 +88,21 @@ public class TcpController {
             String modelId = queryDeviceModel.getModelId();
             String deviceAddress = "";
             int preModelLength = modelId.length();
-            String result = hex.substring(preModelLength);
-            int endCRC = preModelLength + 16;
-            String sendHex = hex.substring(preModelLength, endCRC);
-            String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
-            if(StringUtils.isBlank(deviceId)){
-                //不带发送指令
-                deviceAddress = hex.substring(preModelLength, preModelLength+2);
-                deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
-            }else {
-                deviceAddress = hex.substring(endCRC, endCRC+2);
+            if(hex.length() >= preModelLength ){
+                String result = hex.substring(preModelLength);
+                int endCRC = preModelLength + 16;
+                String sendHex = hex.substring(preModelLength, endCRC);
+                String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
+                if(StringUtils.isBlank(deviceId)){
+                    //不带发送指令
+                    deviceAddress = hex.substring(preModelLength, preModelLength+2);
+                    deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
+                }else {
+                    deviceAddress = hex.substring(endCRC, endCRC+2);
+                }
+                System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+deviceId+";result="+result);
+                hexBuild(deviceId,result);
             }
-            System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+modelId+";result="+result);
-            hexBuild(deviceId,result);
         }
       /*  if(hex.length() > 48){
             modelId = hex.substring(0, 30);

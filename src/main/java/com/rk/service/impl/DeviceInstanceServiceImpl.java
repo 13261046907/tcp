@@ -9,6 +9,7 @@ import com.rk.service.DeviceInstanceService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Service("deviceInstanceService")
 public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapper, DeviceInstance> implements DeviceInstanceService {
@@ -37,8 +38,22 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     }
 
     @Override
-    public DeviceModel selectDeviceModelByChannelId(String channelId) {
-        return devDeviceInstanceMapper.selectDeviceModelByChannelId(channelId);
+    public String selectProductIdByDeviceId(String deviceId) {
+        return devDeviceInstanceMapper.selectProductIdByDeviceId(deviceId);
+    }
+
+    @Override
+    public List<String> selectDeviceIdByModelId(String modelId) {
+        return devDeviceInstanceMapper.selectDeviceIdByModelId(modelId);
+    }
+
+    @Override
+    public List<DeviceModel> selectAllTcpTemp() {
+        return devDeviceInstanceMapper.selectAllTcpTemp();
+    }
+    @Override
+    public DeviceModel selectDeviceModelByChannelId(String channelId,String modelId) {
+        return devDeviceInstanceMapper.selectDeviceModelByChannelId(channelId,modelId);
     }
 
     @Override
@@ -59,5 +74,15 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     @Override
     public void deleteDeviceModelByChannelId(String channelId) {
         devDeviceInstanceMapper.deleteDeviceModelByChannelId(channelId);
+    }
+
+    @Override
+    public void updateDeviceStateByDeviceId(String state,String deviceId) {
+        devDeviceInstanceMapper.updateDeviceStateByDeviceId(state,deviceId);
+    }
+
+    @Override
+    public void updateProductStateByProductId(String state,String productId) {
+        devDeviceInstanceMapper.updateProductStateByProductId(state,productId);
     }
 }

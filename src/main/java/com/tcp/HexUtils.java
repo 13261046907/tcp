@@ -50,7 +50,7 @@ public class HexUtils {
         Integer humidity = Integer.parseInt(dataChunks[0], 16); // 湿度，字符串转十六进制转换为十进制
         Integer temperature = Integer.parseInt(dataChunks[1], 16); // 温度
         Integer co2 = Integer.parseInt(dataChunks[5], 16); // CO2
-        Integer light = Integer.parseInt(dataChunks[8], 16) + Integer.parseInt(dataChunks[9], 16); // 光照
+        Integer light = Integer.parseInt(dataChunks[7], 16) + Integer.parseInt(dataChunks[8], 16); // 光照
         List<Integer> hexList = new ArrayList<>();
         hexList.add(humidity);
         hexList.add(temperature);
@@ -76,7 +76,7 @@ public class HexUtils {
     }
 
     public static void main(String[] args) {
-        String aa = "012300B5000000000000021E00000000006040C3";
+        String aa = "010312015E00B700000000000002240000000001B0E985";
 
         // 按4个字节分割字符串
         String[] dataChunks = splitIntoChunks(aa, 4);

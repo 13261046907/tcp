@@ -5,6 +5,8 @@ import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
 import com.rk.domain.DeviceProperty;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -23,7 +25,13 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
 
     String selectDeviceIdByAddress(String modelId,String deviceAddress);
 
-    DeviceModel selectDeviceModelByChannelId(String channelId);
+    String selectProductIdByDeviceId(String deviceId);
+
+    List<String> selectDeviceIdByModelId(String modelId);
+
+    List<DeviceModel> selectAllTcpTemp();
+
+    DeviceModel selectDeviceModelByChannelId(String channelId,String modelId);
 
     void insertDeviceModel(DeviceModel deviceModel);
 
@@ -32,4 +40,8 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
     void updateDeriveMetadataValueById(String deriveMetadataValue,String deviceId);
 
     void deleteDeviceModelByChannelId(String channelId);
+
+    void updateDeviceStateByDeviceId(String state,String deviceId);
+
+    void updateProductStateByProductId(String state,String productId);
 }

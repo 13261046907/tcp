@@ -10,8 +10,16 @@
         select derive_metadata_value from dev_device_instance where id=#{deviceId};
     </select>
 
+    <select id="selectProductIdByDeviceId" resultType="java.lang.String">
+        select product_id from dev_device_instance where id=#{deviceId};
+    </select>
+
     <select id="selectDeviceIdByAddress" resultType="java.lang.String">
         select device_id from dev_device_instance_tcp_template where model_id=#{modelId} and device_address=#{deviceAddress} limit 1;
+    </select>
+
+    <select id="selectDeviceIdByModelId" resultType="java.lang.String">
+        select device_id from dev_device_instance_tcp_template where model_id=#{modelId};
     </select>
 
     <select id="selectDeviceModelByChannelId" resultType="com.rk.domain.DeviceModel">
@@ -19,6 +27,9 @@
         <where>
             <if test="channelId != null and channelId != ''">
                 and  channel = #{channelId}
+            </if>
+            <if test="modelId != null and modelId != ''">
+                and  model_id = #{modelId}
             </if>
         </where>
         order by id desc limit 1
@@ -31,6 +42,13 @@
     <select id="selectTcpTempByDeviceAddress" resultType="java.lang.String">
         SELECT device_id FROM dev_device_instance_tcp_template WHERE device_address=#{deviceAddress};
     </select>
+
+    <select id="selectAllTcpTemp" resultType="com.rk.domain.DeviceModel">
+        SELECT device_id,instruction_crc,model_id FROM dev_device_instance_tcp_template
+    </select>
+    <update id="updateDeriveMetadataValueById">
+        update dev_device_instance set derive_metadata_value = #{deriveMetadataValue} where id=#{deviceId};
+    </update>
 
     <update id="updateDeriveMetadataValueById">
         update dev_device_instance set derive_metadata_value = #{deriveMetadataValue} where id=#{deviceId};
@@ -51,4 +69,10 @@
     <delete id="deleteDeviceModelByChannelId">
         delete  from  dev_device_model where channel = #{channelId};
     </delete>
+    <update id="updateDeviceStateByDeviceId">
+        update dev_device_instance set state = #{state} where id=#{deviceId}
+    </update>
+    <update id="updateProductStateByProductId">
+        update dev_product set state = #{state} where id=#{productId}
+    </update>
 </mapper>
