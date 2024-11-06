@@ -13,10 +13,16 @@ public enum PropertyUnitEnum {
     K("钾", "mg/kg"),
     TEMPERATURE("温度", "°C"),
     HUMIDITY("湿度", "RH%"),
-    EC("ec", "mS/cm"),
-    PH("ph", ""),
+    EC("EC", "mS/cm"),
+    PH("PH", ""),
     CO2("co2", "ppm"),
-    LIGHT("光照", "Lux,lx");
+    LIGHT("光照", "Lux,lx"),
+    WIND("风速", "m/s"),
+    EVAPORATION("蒸发量", "mm"),
+    RAIN("降雨量", "mm"),
+    PA("气压", "Pa"),
+    PAR("光合辐射", "PAR");
+
 
     @Getter
     private final String name;

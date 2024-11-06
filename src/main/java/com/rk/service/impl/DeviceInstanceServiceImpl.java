@@ -9,6 +9,7 @@ import com.rk.service.DeviceInstanceService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 
 @Service("deviceInstanceService")
@@ -84,5 +85,9 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     @Override
     public void updateProductStateByProductId(String state,String productId) {
         devDeviceInstanceMapper.updateProductStateByProductId(state,productId);
+    }
+    @Override
+    public void updateDeviceModelDate(String id, Date date) {
+        devDeviceInstanceMapper.updateDeviceModelDate(id,date);
     }
 }

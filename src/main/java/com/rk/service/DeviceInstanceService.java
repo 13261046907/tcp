@@ -5,6 +5,7 @@ import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
 import com.rk.domain.DeviceProperty;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,4 +45,6 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
     void updateDeviceStateByDeviceId(String state,String deviceId);
 
     void updateProductStateByProductId(String state,String productId);
+
+    void updateDeviceModelDate(String id, Date date);
 }

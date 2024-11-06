@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -145,6 +146,8 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 deviceModel.setChannel(channelId);
                 deviceInstanceService.insertDeviceModel(deviceModel);
                 return;
+            }else {
+                deviceInstanceService.updateDeviceModelDate(queryDeviceModel.getId(),new Date());
             }
             log.info("接收原始数据1:{}: " + hex);
             try {
@@ -348,6 +351,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             }
         }
         if(StringUtils.isNotBlank(deviceId)){
+            log.info("exceptionCaughtDeviceId:{}",deviceId);
             deviceInstanceService.updateDeviceStateByDeviceId(DeviceStateEnum.online.getValue(),deviceId);
             String productId = deviceInstanceService.selectProductIdByDeviceId(deviceId);
             deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.online.getName(),productId);
@@ -440,6 +444,26 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.LIGHT.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.LIGHT.getValue());
                         }
+                        if(PropertyUnitEnum.WIND.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.WIND.getValue());
+                            deviceProperty.setUnit(PropertyUnitEnum.WIND.getValue());
+                        }
+                        if(PropertyUnitEnum.EVAPORATION.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.EVAPORATION.getValue());
+                            deviceProperty.setUnit(PropertyUnitEnum.EVAPORATION.getValue());
+                        }
+                        if(PropertyUnitEnum.RAIN.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.RAIN.getValue());
+                            deviceProperty.setUnit(PropertyUnitEnum.RAIN.getValue());
+                        }
+                        if(PropertyUnitEnum.PA.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.PA.getValue());
+                            deviceProperty.setUnit(PropertyUnitEnum.PA.getValue());
+                        }
+                        if(PropertyUnitEnum.PAR.getName().equals(deriveMetadataValueVo.getName())){
+                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.PAR.getValue());
+                            deviceProperty.setUnit(PropertyUnitEnum.PAR.getValue());
+                        }
                         deriveMetadataValueVo.setUpdateTime(new Date());
                         deriveMetadataValueVos.add(deriveMetadataValueVo);
                         deviceProperty.setDeviceId(deviceId);
@@ -491,4 +515,48 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         size = Math.min(list.size(), size);
         return new ArrayList<>(list.subList(0, size)); // 返回前 3 个元素，或原列表的所有元素（如果不足3）
     }
+
+    public void syncChannelWrite(String channelId, String msg) throws Exception {
+        // 执行异步的 API 调用，不等待结果
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+            // 模拟 API 调用的耗时
+            try {
+                ChannelHandlerContext ctx = CHANNEL_MAP.get(channelId);
+                if (ctx == null) {
+                    log.info("通道【" + channelId + "】不存在");
+                    //todo 下限对应的产品和设备
+                    DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channelId, null);
+                    if (!Objects.isNull(queryDeviceModel)) {
+                        deviceInstanceService.deleteDeviceModelByChannelId(channelId);
+                        //todo 修改设备和产品下线
+                        List<String> deviceIdList = deviceInstanceService.selectDeviceIdByModelId(queryDeviceModel.getModelId());
+                        if (!CollectionUtils.isEmpty(deviceIdList)) {
+                            deviceIdList.stream().forEach(deviceId -> {
+                                deviceInstanceService.updateDeviceStateByDeviceId(DeviceStateEnum.offline.getValue(), deviceId);
+                                String productId = deviceInstanceService.selectProductIdByDeviceId(deviceId);
+                                deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.offline.getName(), productId);
+                            });
+                        }
+                    }
+                    return;
+                }
+                if (msg == null && msg == "") {
+                    log.info("服务端响应空的消息");
+                    return;
+                }
+                //将客户端的信息直接返回写入ctx
+                ByteBuf bufAck = ctx.alloc().buffer();
+                byte[] payload = hexStringToByteArray(msg);
+                bufAck.writeBytes(payload);
+                ctx.writeAndFlush(bufAck);
+                // 确保这个 Sleep 不阻塞事件循环中的其他操作
+                Thread.sleep(1000);
+                log.info("异步 API 调用完成!");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
 }

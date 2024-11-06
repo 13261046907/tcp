@@ -23,7 +23,7 @@
     </select>
 
     <select id="selectDeviceModelByChannelId" resultType="com.rk.domain.DeviceModel">
-        SELECT id,model_id,device_address,channel FROM dev_device_model
+        SELECT id,model_id,device_address,channel,create_time FROM dev_device_model
         <where>
             <if test="channelId != null and channelId != ''">
                 and  channel = #{channelId}
@@ -74,5 +74,9 @@
     </update>
     <update id="updateProductStateByProductId">
         update dev_product set state = #{state} where id=#{productId}
+    </update>
+
+    <update id="updateDeviceModelDate">
+        update dev_device_model set create_time = #{date} where id=#{id}
     </update>
 </mapper>

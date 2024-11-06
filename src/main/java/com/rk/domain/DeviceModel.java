@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @TableName("dev_device_model")
 @Data
@@ -23,6 +24,9 @@ public class DeviceModel implements Serializable {
 
     @TableField("`is_prefix`")
     private String isPrefix;
+
+    @TableField("`create_time`")
+    private Date createTime;
 
     private String instructionCrc;
 
