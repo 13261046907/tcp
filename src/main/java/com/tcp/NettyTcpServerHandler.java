@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -378,8 +379,16 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 List<ProductProperties> propertiesList = JSONArray.parseArray(metadataJson.getString("properties"), ProductProperties.class);
-                Integer substring = Integer.valueOf(convertedHexString.substring(4, 6)); // 提取单个字符
-                paramNum = substring / 2;
+//                Integer substring = Integer.valueOf(convertedHexString.substring(4, 6)); // 提取单个字符
+                Integer paramCount = 0;
+                String substring = convertedHexString.substring(4, 6);
+                if(isNumeric(substring)){
+                    paramCount = Integer.valueOf(substring);
+                    paramNum = paramCount / 2;
+                }else {
+                    paramCount =  new BigInteger(substring, 16).intValue(); // 将十六进制转换为十进制
+                    paramNum = paramCount / 2;
+                }
                 if(paramNum != 0){
                     if(tcpTemplateByDeviceIds.size() ==2){
                         if(paramNum == 3){
@@ -558,5 +567,12 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             }
         });
     }
-
+    public static boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str); // 可以使用 Integer.parseInt 处理整数
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 }
