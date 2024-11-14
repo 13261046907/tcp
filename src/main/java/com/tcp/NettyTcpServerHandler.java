@@ -1,6 +1,7 @@
 package com.tcp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -20,7 +21,6 @@ import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
@@ -175,27 +175,18 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             }
             log.info("接收原始数据1:{}: " + hex);
             try {
-                if(!Objects.isNull(queryDeviceModel)){
-                    String modelId = queryDeviceModel.getModelId();
+                if (!Objects.isNull(queryDeviceModel)) {
+                    String modelId = queryDeviceModel.getImei();
                     String deviceAddress = "";
                     int preModelLength = modelId.length();
-                    if(hex.length() >= preModelLength ){
-                        String result = hex.substring(preModelLength);
-                        int endCRC = preModelLength + 16;
-                        String sendHex = hex.substring(preModelLength, endCRC);
-                        String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
-                        if(StringUtils.isBlank(deviceId)){
-                            //不带发送指令
-                            deviceAddress = hex.substring(preModelLength, preModelLength+2);
-                            deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
-                        }else {
-                            deviceAddress = hex.substring(endCRC, endCRC+2);
-                        }
-                        System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+deviceId+";result="+result);
-                        hexBuild(deviceId,result);
+                    if (hex.length() >= preModelLength) {
+                        deviceAddress = hex.substring(0, 2);
+                        String deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId, deviceAddress);
+                        System.out.println("perStr:" + modelId + ";deviceAddress:" + deviceAddress + ";deviceId::" + deviceId + ";result=" + hex);
+                        hexBuild(deviceId, hex);
                     }
                 }
-            } catch (Exception e) {
+            }catch (Exception e) {
                 e.printStackTrace();
             }
             //响应客户端
@@ -353,7 +344,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             if(!Objects.isNull(tcpTemplateByDeviceId)){
                 deviceType = tcpTemplateByDeviceId.getDeviceType();
                 String isPrefix = tcpTemplateByDeviceId.getIsPrefix();
-                if("0".equals(isPrefix)){
+                if("1".equals(isPrefix)){
                     //不带发送指令,直接解析不需要截取
                     deviceId = tcpTemplateByDeviceId.getDeviceId();
                     deviceType = tcpTemplateByDeviceId.getDeviceType();
@@ -610,6 +601,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         String currentDate = new Date().getTime() + "";
                         deviceInstanceEntity.setId(currentDate);
                         deviceInstanceEntity.setProductId(productId);
+                        deviceInstanceEntity.setState("online");
                         //创建设备
                         log.info("insertDeviceInstance:{}", JSONObject.toJSONString(deviceInstanceEntity));
                         deviceInstanceService.insertDeviceInstance(deviceInstanceEntity);
@@ -628,7 +620,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             deviceInstanceEntity.setModelId(productId);
                             deviceInstanceEntity.setId(currentDate);
                             deviceInstanceEntity.setIsPrefix("1");
-                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            deviceInstanceEntity.setCreateTime(DateUtil.now());
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
                             //创建土壤含水率      温度   电导率   ph模版
@@ -643,7 +635,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             deviceInstanceEntity.setModelId(productId);
                             deviceInstanceEntity.setId(new Date().getTime() + "");
                             deviceInstanceEntity.setIsPrefix("1");
-                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            deviceInstanceEntity.setCreateTime(DateUtil.now());
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
                         }else if("01".equals(deviceInstanceEntity.getDeviceAddress())){
@@ -655,7 +647,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             deviceInstanceEntity.setId(currentDate);
                             deviceInstanceEntity.setIsPrefix("1");
                             deviceInstanceEntity.setTitle(deviceInstanceEntity.getName());
-                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            deviceInstanceEntity.setCreateTime(DateUtil.now());
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
                         }
