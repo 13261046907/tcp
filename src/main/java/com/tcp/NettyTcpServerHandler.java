@@ -599,7 +599,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    @Transactional
     public void buildDeviceInstance(String productId) {
         try {
             List<DeviceInstanceEntity> deviceInstanceEntities = deviceInstanceService.selectDevDeviceByProductId(productId);
@@ -612,18 +611,54 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deviceInstanceEntity.setId(currentDate);
                         deviceInstanceEntity.setProductId(productId);
                         //创建设备
-                        log.info("insertDeviceInstance:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                        log.info("insertDeviceInstance:{}", JSONObject.toJSONString(deviceInstanceEntity));
                         deviceInstanceService.insertDeviceInstance(deviceInstanceEntity);
-                        //创建模版
-                        String deviceId = deviceInstanceEntity.getId();
-                        deviceInstanceEntity.setDeviceId(deviceId);
-                        deviceInstanceEntity.setDeviceType("1");
-                        deviceInstanceEntity.setModelId(productId);
-                        deviceInstanceEntity.setId(currentDate);
-                        deviceInstanceEntity.setIsPrefix("1");
-                        deviceInstanceEntity.setCreateTime(new Date().toString());
-                        log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
-                        deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                        if("03".equals(deviceInstanceEntity.getDeviceAddress())){
+                            //土壤七合一两个指令
+                            //创建氮磷钾模版
+                            String deviceId = deviceInstanceEntity.getId();
+                            deviceInstanceEntity.setDeviceId(deviceId);
+                            deviceInstanceEntity.setDeviceType("1");
+                            deviceInstanceEntity.setDeviceAddress("03");
+                            deviceInstanceEntity.setFunctionCode("03");
+                            deviceInstanceEntity.setRegisterAddress("001E");
+                            deviceInstanceEntity.setDataLength("0003");
+                            deviceInstanceEntity.setInstructionCrc("0303001E0003642f");
+                            deviceInstanceEntity.setTitle("氮磷钾");
+                            deviceInstanceEntity.setModelId(productId);
+                            deviceInstanceEntity.setId(currentDate);
+                            deviceInstanceEntity.setIsPrefix("1");
+                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                            deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                            //创建土壤含水率      温度   电导率   ph模版
+                            deviceInstanceEntity.setDeviceId(deviceId);
+                            deviceInstanceEntity.setDeviceType("1");
+                            deviceInstanceEntity.setDeviceAddress("03");
+                            deviceInstanceEntity.setFunctionCode("03");
+                            deviceInstanceEntity.setRegisterAddress("0000");
+                            deviceInstanceEntity.setDataLength("0004");
+                            deviceInstanceEntity.setInstructionCrc("03030000000445EB");
+                            deviceInstanceEntity.setTitle("四合一");
+                            deviceInstanceEntity.setModelId(productId);
+                            deviceInstanceEntity.setId(new Date().getTime() + "");
+                            deviceInstanceEntity.setIsPrefix("1");
+                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                            deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                        }else if("01".equals(deviceInstanceEntity.getDeviceAddress())){
+                            //创建模版
+                            String deviceId = deviceInstanceEntity.getId();
+                            deviceInstanceEntity.setDeviceId(deviceId);
+                            deviceInstanceEntity.setDeviceType("1");
+                            deviceInstanceEntity.setModelId(productId);
+                            deviceInstanceEntity.setId(currentDate);
+                            deviceInstanceEntity.setIsPrefix("1");
+                            deviceInstanceEntity.setTitle(deviceInstanceEntity.getName());
+                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                            deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                        }
                     });
                 }
             }

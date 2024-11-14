@@ -1,6 +1,7 @@
 package com.tcp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
 import com.model.DeviceInstanceEntity;
 import com.rk.domain.DeviceModel;
@@ -85,12 +86,14 @@ public class TcpController {
             log.info("加载客户端报文......");
             log.info("【" + channelId + "】" + " :" + hex);
             //根据chanelID查询4g模块关系
+            String imei = "";
             DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channelId,null);
             if(Objects.isNull(queryDeviceModel)){
                 DeviceModel deviceModel = Modbus.buildModel(hex);
                 deviceModel.setModelId(hex);
                 deviceModel.setChannel(channelId);
                 deviceInstanceService.insertDeviceModel(deviceModel);
+                imei = deviceModel.getImei();
             }else {
                 if(hex.length() == 46){
                     String coordinates = Modbus.buildHexString(hex);
@@ -110,18 +113,23 @@ public class TcpController {
                     }
                 }
                 queryDeviceModel.setCreateTime(new Date());
+                imei = queryDeviceModel.getImei();
                 deviceInstanceService.updateDeviceModelDate(queryDeviceModel);
             }
             log.info("接收原始数据1:{}: " + hex);
             //根据imei查询4g下是否有设备,如果没有新增
-            buildDeviceInstance(queryDeviceModel.getImei());
+            buildDeviceInstance(imei);
             try {
                 if(!Objects.isNull(queryDeviceModel)){
                     String modelId = queryDeviceModel.getImei();
                     String deviceAddress = "";
                     int preModelLength = modelId.length();
                     if(hex.length() >= preModelLength ){
-                        String result = hex.substring(preModelLength);
+                        deviceAddress = hex.substring(0, 2);
+                        String deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
+                        System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+deviceId+";result="+hex);
+                        hexBuild(deviceId,hex);
+                        /*String result = hex.substring(preModelLength);
                         int endCRC = preModelLength + 16;
                         String sendHex = hex.substring(preModelLength, endCRC);
                         String deviceId = deviceInstanceService.selectTcpTempBySendHex(sendHex);
@@ -133,7 +141,7 @@ public class TcpController {
                             deviceAddress = hex.substring(endCRC, endCRC+2);
                         }
                         System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+deviceId+";result="+result);
-                        hexBuild(deviceId,result);
+                        hexBuild(deviceId,result);*/
                     }
                 }
             } catch (Exception e) {
@@ -158,16 +166,54 @@ public class TcpController {
                         deviceInstanceEntity.setId(currentDate);
                         deviceInstanceEntity.setProductId(productId);
                         //创建设备
+                        log.info("insertDeviceInstance:{}", JSONObject.toJSONString(deviceInstanceEntity));
                         deviceInstanceService.insertDeviceInstance(deviceInstanceEntity);
-                        //创建模版
-                        String deviceId = deviceInstanceEntity.getId();
-                        deviceInstanceEntity.setDeviceId(deviceId);
-                        deviceInstanceEntity.setDeviceType("1");
-                        deviceInstanceEntity.setModelId(productId);
-                        deviceInstanceEntity.setId(currentDate);
-                        deviceInstanceEntity.setIsPrefix("1");
-                        deviceInstanceEntity.setCreateTime(new Date().toString());
-                        deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                        if("03".equals(deviceInstanceEntity.getDeviceAddress())){
+                            //土壤七合一两个指令
+                            //创建氮磷钾模版
+                            String deviceId = deviceInstanceEntity.getId();
+                            deviceInstanceEntity.setDeviceId(deviceId);
+                            deviceInstanceEntity.setDeviceType("1");
+                            deviceInstanceEntity.setDeviceAddress("03");
+                            deviceInstanceEntity.setFunctionCode("03");
+                            deviceInstanceEntity.setRegisterAddress("001E");
+                            deviceInstanceEntity.setDataLength("0003");
+                            deviceInstanceEntity.setInstructionCrc("0303001E0003642f");
+                            deviceInstanceEntity.setTitle("氮磷钾");
+                            deviceInstanceEntity.setModelId(productId);
+                            deviceInstanceEntity.setId(currentDate);
+                            deviceInstanceEntity.setIsPrefix("1");
+                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                            deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                            //创建土壤含水率      温度   电导率   ph模版
+                            deviceInstanceEntity.setDeviceId(deviceId);
+                            deviceInstanceEntity.setDeviceType("1");
+                            deviceInstanceEntity.setDeviceAddress("03");
+                            deviceInstanceEntity.setFunctionCode("03");
+                            deviceInstanceEntity.setRegisterAddress("0000");
+                            deviceInstanceEntity.setDataLength("0004");
+                            deviceInstanceEntity.setInstructionCrc("03030000000445EB");
+                            deviceInstanceEntity.setTitle("四合一");
+                            deviceInstanceEntity.setModelId(productId);
+                            deviceInstanceEntity.setId(new Date().getTime() + "");
+                            deviceInstanceEntity.setIsPrefix("1");
+                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                            deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                        }else if("01".equals(deviceInstanceEntity.getDeviceAddress())){
+                            //创建模版
+                            String deviceId = deviceInstanceEntity.getId();
+                            deviceInstanceEntity.setDeviceId(deviceId);
+                            deviceInstanceEntity.setDeviceType("1");
+                            deviceInstanceEntity.setModelId(productId);
+                            deviceInstanceEntity.setId(currentDate);
+                            deviceInstanceEntity.setIsPrefix("1");
+                            deviceInstanceEntity.setTitle(deviceInstanceEntity.getName());
+                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                            deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                        }
                     });
                 }
             }

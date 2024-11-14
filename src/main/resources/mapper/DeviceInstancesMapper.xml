@@ -90,7 +90,7 @@
     </insert>
 
     <insert id="insertDeviceTcpTemplate" keyProperty="id" useGeneratedKeys="true">
-        insert into dev_device_instance_tcp_template(id,device_id,device_type, register_address, function_code,device_address,data_length,instruction_crc,is_prefix,title,model_id)
-        values (#{id}, #{deviceId}, #{deviceType},#{registerAddress}, #{functionCode}, #{deviceAddress}, #{dataLength}, #{instructionCrc}, #{isPrefix},#{title},#{modelId})
+        insert into dev_device_instance_tcp_template(id,device_id,device_type, register_address, function_code,device_address,data_length,instruction_crc,is_prefix,title,model_id,create_time)
+        values (#{id}, #{deviceId}, #{deviceType},#{registerAddress}, #{functionCode}, #{deviceAddress}, #{dataLength}, #{instructionCrc}, #{isPrefix},#{title},#{modelId},#{createTime})
     </insert>
 </mapper>

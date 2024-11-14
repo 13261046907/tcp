@@ -3,10 +3,7 @@ package com.tcp;
 import cn.hutool.core.collection.CollectionUtil;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class HexUtils {
     public static List<String> getHexList(String convertedHexString, int num, Map<Integer,String> metricsMap){
@@ -76,6 +73,9 @@ public class HexUtils {
     }
 
     public static void main(String[] args) {
+
+        List<String> hexList = getHexList("03030803E800A9020500353BC2", 4, new HashMap<>());
+        System.out.println(hexList);
         String aa = "010312015E00B700000000000002240000000001B0E985";
 
         // 按4个字节分割字符串
