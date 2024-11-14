@@ -575,7 +575,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 // 确保这个 Sleep 不阻塞事件循环中的其他操作
                 Thread.sleep(1000);
                 log.info("异步 API 调用完成!");
-
+                ctx.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }

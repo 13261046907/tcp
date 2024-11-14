@@ -31,9 +31,9 @@ public class StateTaskService {
     @Autowired
     private NettyTcpServerHandler serverHandler;
 
-//    @Scheduled(cron = "0 0/2 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     public void chatGPTTask1(){
-        log.info("2分钟任务更新完工数据:{}",new Date());
+        log.info("5分钟任务更新完工数据:{}",new Date());
         List<DeviceModel> deviceModelVos = deviceInstanceService.selectAllTcpTemp();
         if(CollectionUtil.isNotEmpty(deviceModelVos)){
             deviceModelVos.stream().forEach(deviceModelVo -> {
@@ -50,7 +50,7 @@ public class StateTaskService {
                         // 计算时间差
                         Duration duration = Duration.between(createTimeInstant, currentTime);
                         // 判断差值是否大于两分钟
-                        if (duration.toMinutes() > 2) {
+                        if (duration.toMinutes() > 5) {
                             log.info("设备ID:deviceId:{},设备掉线",deviceId);
                             deviceInstanceService.deleteDeviceModelByChannelId(deviceModel.getChannel());
                             //修改设备和产品下线
@@ -65,7 +65,7 @@ public class StateTaskService {
                         } else {
                             log.info("设备ID:deviceId:{},设备在线",deviceId);
                         }
-                        serverHandler.syncChannelWrite(deviceModel.getChannel(), deviceModelVo.getInstructionCrc());
+//                        serverHandler.syncChannelWrite(deviceModel.getChannel(), deviceModelVo.getInstructionCrc());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
