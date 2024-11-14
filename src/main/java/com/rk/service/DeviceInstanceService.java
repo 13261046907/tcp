@@ -1,6 +1,7 @@
 package com.rk.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.model.DeviceInstanceEntity;
 import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
 import com.rk.domain.DeviceProperty;
@@ -46,5 +47,13 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
 
     void updateProductStateByProductId(String state,String productId);
 
-    void updateDeviceModelDate(String id, Date date);
+    void updateDeviceModelDate(DeviceModel queryDeviceModel);
+
+    List<DeviceInstanceEntity> selectDevDeviceByProductId(String productId);
+
+    List<DeviceInstanceEntity> selectAllDevDeviceMetadata();
+
+    void insertDeviceInstance(DeviceInstanceEntity deviceInstanceEntity);
+
+    void insertDeviceTcpTemplate(DeviceInstanceEntity deviceInstanceEntity);
 }

@@ -23,13 +23,13 @@
     </select>
 
     <select id="selectDeviceModelByChannelId" resultType="com.rk.domain.DeviceModel">
-        SELECT id,model_id,device_address,channel,create_time FROM dev_device_model
+        SELECT * FROM dev_device_model
         <where>
             <if test="channelId != null and channelId != ''">
                 and  channel = #{channelId}
             </if>
             <if test="modelId != null and modelId != ''">
-                and  model_id = #{modelId}
+                and  imei = #{modelId}
             </if>
         </where>
         order by id desc limit 1
@@ -50,17 +50,13 @@
         update dev_device_instance set derive_metadata_value = #{deriveMetadataValue} where id=#{deviceId};
     </update>
 
-    <update id="updateDeriveMetadataValueById">
-        update dev_device_instance set derive_metadata_value = #{deriveMetadataValue} where id=#{deviceId};
-    </update>
-
     <update id="updateDeviceModelByDeviceId">
         update dev_device_model set channel = #{channel} where model_id=#{modelId} and device_address=#{deviceAddress};
     </update>
 
     <insert id="insertDeviceModel" keyProperty="id" useGeneratedKeys="true">
-        insert into dev_device_model(model_id, device_address, channel)
-        values (#{modelId}, #{deviceAddress}, #{channel})
+        insert into dev_device_model(model_id, device_address, channel,imei,iccid,fver,csq)
+        values (#{modelId}, #{deviceAddress}, #{channel}, #{imei}, #{iccid}, #{fver}, #{csq})
     </insert>
     <insert id="insertDeviceProperty" keyProperty="id" useGeneratedKeys="true">
         insert into dev_device_property(device_id, property,value,unit)
@@ -77,6 +73,24 @@
     </update>
 
     <update id="updateDeviceModelDate">
-        update dev_device_model set create_time = #{date} where id=#{id}
+        update dev_device_model set create_time = #{createTime},longitude = #{longitude}, latitude = #{latitude} where id=#{id}
     </update>
+
+    <select id="selectAllDevDeviceMetadata" resultType="com.model.DeviceInstanceEntity">
+        select * from dev_device_metadata
+    </select>
+
+    <select id="selectDevDeviceByProductId" resultType="com.model.DeviceInstanceEntity">
+        select * from dev_device_instance where product_id = #{productId}
+    </select>
+
+    <insert id="insertDeviceInstance" keyProperty="id" useGeneratedKeys="true">
+        insert into dev_device_instance(id, photo_url, name, device_type,product_id,derive_metadata,state)
+        values (#{id}, #{photoUrl}, #{name}, #{deviceType}, #{productId}, #{deriveMetadata},#{state})
+    </insert>
+
+    <insert id="insertDeviceTcpTemplate" keyProperty="id" useGeneratedKeys="true">
+        insert into dev_device_instance_tcp_template(id,device_id,device_type, register_address, function_code,device_address,data_length,instruction_crc,is_prefix,title,model_id)
+        values (#{id}, #{deviceId}, #{deviceType},#{registerAddress}, #{functionCode}, #{deviceAddress}, #{dataLength}, #{instructionCrc}, #{isPrefix},#{title},#{modelId})
+    </insert>
 </mapper>

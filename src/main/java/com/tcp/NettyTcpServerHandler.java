@@ -1,11 +1,13 @@
 package com.tcp;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.http.HttpRequest;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
 import com.enums.DeviceStateEnum;
 import com.enums.PropertyUnitEnum;
+import com.model.DeviceInstanceEntity;
 import com.rk.domain.*;
 import com.rk.service.DeviceInstanceService;
 import com.rk.service.DeviceTcpInstanceService;
@@ -18,6 +20,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
@@ -142,13 +145,33 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             //根据chanelID查询4g模块关系
             DeviceModel queryDeviceModel = deviceInstanceService.selectDeviceModelByChannelId(channelId,null);
             if(Objects.isNull(queryDeviceModel)){
-                DeviceModel deviceModel = new DeviceModel();
+                DeviceModel deviceModel = Modbus.buildModel(hex);
                 deviceModel.setModelId(hex);
                 deviceModel.setChannel(channelId);
                 deviceInstanceService.insertDeviceModel(deviceModel);
-                return;
+                //根据imei查询4g下是否有设备,如果没有新增
+                log.info("deviceModel:{}",JSONObject.toJSONString(deviceModel));
+                buildDeviceInstance(deviceModel.getImei());
             }else {
-                deviceInstanceService.updateDeviceModelDate(queryDeviceModel.getId(),new Date());
+                if(hex.length() == 46){
+                    String coordinates = Modbus.buildHexString(hex);
+                    // 按下划线分割
+                    String[] parts = coordinates.split("_");
+                    // 确保分割后有两个部分
+                    if (parts.length == 2) {
+                        String longitude = parts[0]; // 第一个部分是精度
+                        String latitude = parts[1];  // 第二个部分是纬度
+                        queryDeviceModel.setLongitude(longitude);
+                        queryDeviceModel.setLatitude(latitude);
+                        // 输出结果
+                        log.info("精度 (Longitude):{}",longitude);
+                        log.info("维度 (Latitude):{}", latitude);
+                    } else {
+                        log.error("非经纬度格式不正确");
+                    }
+                }
+                queryDeviceModel.setCreateTime(new Date());
+                deviceInstanceService.updateDeviceModelDate(queryDeviceModel);
             }
             log.info("接收原始数据1:{}: " + hex);
             try {
@@ -573,6 +596,39 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             return true;
         } catch (NumberFormatException e) {
             return false;
+        }
+    }
+
+    @Transactional
+    public void buildDeviceInstance(String productId) {
+        try {
+            List<DeviceInstanceEntity> deviceInstanceEntities = deviceInstanceService.selectDevDeviceByProductId(productId);
+            if(CollectionUtil.isEmpty(deviceInstanceEntities)){
+                //查询土壤和空气模块
+                List<DeviceInstanceEntity> deviceInstanceEntitiesList = deviceInstanceService.selectAllDevDeviceMetadata();
+                if(CollectionUtil.isNotEmpty(deviceInstanceEntitiesList)){
+                    deviceInstanceEntitiesList.stream().forEach(deviceInstanceEntity -> {
+                        String currentDate = new Date().getTime() + "";
+                        deviceInstanceEntity.setId(currentDate);
+                        deviceInstanceEntity.setProductId(productId);
+                        //创建设备
+                        log.info("insertDeviceInstance:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                        deviceInstanceService.insertDeviceInstance(deviceInstanceEntity);
+                        //创建模版
+                        String deviceId = deviceInstanceEntity.getId();
+                        deviceInstanceEntity.setDeviceId(deviceId);
+                        deviceInstanceEntity.setDeviceType("1");
+                        deviceInstanceEntity.setModelId(productId);
+                        deviceInstanceEntity.setId(currentDate);
+                        deviceInstanceEntity.setIsPrefix("1");
+                        deviceInstanceEntity.setCreateTime(new Date().toString());
+                        log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                        deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                    });
+                }
+            }
+        }catch (Exception  e){
+            e.printStackTrace();
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.rk.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.model.DeviceInstanceEntity;
 import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
 import com.rk.domain.DeviceProperty;
@@ -87,7 +88,25 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
         devDeviceInstanceMapper.updateProductStateByProductId(state,productId);
     }
     @Override
-    public void updateDeviceModelDate(String id, Date date) {
-        devDeviceInstanceMapper.updateDeviceModelDate(id,date);
+    public void updateDeviceModelDate(DeviceModel queryDeviceModel) {
+        devDeviceInstanceMapper.updateDeviceModelDate(queryDeviceModel);
+    }
+
+    @Override
+    public List<DeviceInstanceEntity> selectDevDeviceByProductId(String productId) {
+        return devDeviceInstanceMapper.selectDevDeviceByProductId(productId);
+    }
+    @Override
+    public List<DeviceInstanceEntity> selectAllDevDeviceMetadata(){
+        return devDeviceInstanceMapper.selectAllDevDeviceMetadata();
+    }
+    @Override
+    public void insertDeviceInstance(DeviceInstanceEntity deviceInstanceEntity){
+        devDeviceInstanceMapper.insertDeviceInstance(deviceInstanceEntity);
+    }
+
+    @Override
+    public void insertDeviceTcpTemplate(DeviceInstanceEntity deviceInstanceEntity){
+        devDeviceInstanceMapper.insertDeviceTcpTemplate(deviceInstanceEntity);
     }
 }

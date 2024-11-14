@@ -31,14 +31,14 @@ public class StateTaskService {
     @Autowired
     private NettyTcpServerHandler serverHandler;
 
-    @Scheduled(cron = "0 0/2 * * * ?")
+//    @Scheduled(cron = "0 0/2 * * * ?")
     public void chatGPTTask1(){
         log.info("2分钟任务更新完工数据:{}",new Date());
         List<DeviceModel> deviceModelVos = deviceInstanceService.selectAllTcpTemp();
         if(CollectionUtil.isNotEmpty(deviceModelVos)){
             deviceModelVos.stream().forEach(deviceModelVo -> {
                 String deviceId = deviceModelVo.getDeviceId();
-                DeviceModel deviceModel = deviceInstanceService.selectDeviceModelByChannelId(null, deviceModelVo.getModelId());
+                DeviceModel deviceModel = deviceInstanceService.selectDeviceModelByChannelId(null, deviceModelVo.getImei());
                 if(!Objects.isNull(deviceModel)){
                     try {
                         log.info("设备ID:deviceId:{},channel:{},发送指令:{}",deviceId,deviceModel.getChannel(),deviceModelVo.getInstructionCrc());
