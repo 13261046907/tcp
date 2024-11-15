@@ -13,6 +13,8 @@ public enum PropertyUnitEnum {
     K("钾", "mg/kg"),
     TEMPERATURE("温度", "°C"),
     HUMIDITY("湿度", "RH%"),
+    TEMPERATURE_TU("温度（土壤）", "°C"),
+    HUMIDITY_TU("湿度（土壤）", "RH%"),
     EC("EC", "mS/cm"),
     PH("PH", ""),
     CO2("co2", "ppm"),

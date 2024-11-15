@@ -447,11 +447,11 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.K.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.K.getValue());
                         }
-                        if(PropertyUnitEnum.TEMPERATURE.getName().equals(deriveMetadataValueVo.getName())){
+                        if(PropertyUnitEnum.TEMPERATURE.getName().equals(deriveMetadataValueVo.getName()) || PropertyUnitEnum.TEMPERATURE_TU.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.TEMPERATURE.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.TEMPERATURE.getValue());
                         }
-                        if(PropertyUnitEnum.HUMIDITY.getName().equals(deriveMetadataValueVo.getName())){
+                        if(PropertyUnitEnum.HUMIDITY.getName().equals(deriveMetadataValueVo.getName()) || PropertyUnitEnum.HUMIDITY_TU.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.HUMIDITY.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.HUMIDITY.getValue());
                         }
