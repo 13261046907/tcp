@@ -87,6 +87,12 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     public void updateProductStateByProductId(String state,String productId) {
         devDeviceInstanceMapper.updateProductStateByProductId(state,productId);
     }
+
+    @Override
+    public DeviceInstanceEntity selectDevProductInfoById(String productId) {
+        return devDeviceInstanceMapper.selectDevProductInfoById(productId);
+    }
+
     @Override
     public void updateDeviceModelDate(DeviceModel queryDeviceModel) {
         devDeviceInstanceMapper.updateDeviceModelDate(queryDeviceModel);

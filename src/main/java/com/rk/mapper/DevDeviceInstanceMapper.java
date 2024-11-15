@@ -52,6 +52,8 @@ public interface DevDeviceInstanceMapper extends BaseMapper<DeviceInstance> {
 
     void updateProductStateByProductId(String state,String productId);
 
+    DeviceInstanceEntity selectDevProductInfoById(String productId);
+
     void updateDeviceModelDate(DeviceModel queryDeviceModel);
 
     List<DeviceInstanceEntity> selectDevDeviceByProductId(String productId);

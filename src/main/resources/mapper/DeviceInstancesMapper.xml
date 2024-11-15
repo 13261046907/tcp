@@ -72,6 +72,10 @@
         update dev_product set state = #{state} where id=#{productId}
     </update>
 
+    <select id="selectDevProductInfoById" resultType="com.model.DeviceInstanceEntity">
+        SELECT name as productName,sampling_frequency as samplingFrequency FROM dev_product where id=#{productId}
+    </select>
+
     <update id="updateDeviceModelDate">
         update dev_device_model set create_time = #{createTime},longitude = #{longitude}, latitude = #{latitude} where id=#{id}
     </update>
@@ -85,12 +89,12 @@
     </select>
 
     <insert id="insertDeviceInstance" keyProperty="id" useGeneratedKeys="true">
-        insert into dev_device_instance(id, photo_url, name, device_type,product_id,derive_metadata,state)
-        values (#{id}, #{photoUrl}, #{name}, #{deviceType}, #{productId}, #{deriveMetadata},#{state})
+        insert into dev_device_instance(id, photo_url, name, device_type,product_id,product_name,derive_metadata,state)
+        values (#{id}, #{photoUrl}, #{name}, #{deviceType}, #{productId},#{productName}, #{deriveMetadata},#{state})
     </insert>
 
     <insert id="insertDeviceTcpTemplate" keyProperty="id" useGeneratedKeys="true">
-        insert into dev_device_instance_tcp_template(id,device_id,device_type, register_address, function_code,device_address,data_length,instruction_crc,is_prefix,title,model_id,create_time)
-        values (#{id}, #{deviceId}, #{deviceType},#{registerAddress}, #{functionCode}, #{deviceAddress}, #{dataLength}, #{instructionCrc}, #{isPrefix},#{title},#{modelId},#{createTime})
+        insert into dev_device_instance_tcp_template(id,device_id,device_type, register_address, function_code,device_address,data_length,instruction_crc,is_prefix,title,model_id,sampling_frequency,create_time)
+        values (#{id}, #{deviceId}, #{deviceType},#{registerAddress}, #{functionCode}, #{deviceAddress}, #{dataLength}, #{instructionCrc}, #{isPrefix},#{title},#{modelId},#{samplingFrequency},#{createTime})
     </insert>
 </mapper>

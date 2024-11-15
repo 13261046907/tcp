@@ -9,6 +9,8 @@ import java.io.Serializable;
 public class DeviceInstanceEntity implements Serializable {
     private String id;
     private String productId;
+    private String productName;
+    private String samplingFrequency;
     @TableField("device_id")
     private String deviceId;
     @TableField("photo_url")

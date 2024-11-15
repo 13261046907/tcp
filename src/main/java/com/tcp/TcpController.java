@@ -1,18 +1,18 @@
 package com.tcp;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
+import com.enums.DeviceStateEnum;
 import com.model.DeviceInstanceEntity;
 import com.rk.domain.DeviceModel;
 import com.rk.service.DeviceInstanceService;
 import com.rk.utils.R;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -156,15 +156,28 @@ public class TcpController {
     @Transactional
     public void buildDeviceInstance(String productId) {
         try {
+            //查询产品id,更新产品在线
+            DeviceInstanceEntity deviceInstanceEntityQuyery = deviceInstanceService.selectDevProductInfoById(productId);
+            String productName = "";
+            String samplingFrequency = "";
+            if(!Objects.isNull(deviceInstanceEntityQuyery)){
+                productName = deviceInstanceEntityQuyery.getProductName();
+                samplingFrequency = deviceInstanceEntityQuyery.getSamplingFrequency();
+            }
+            deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.online.getName(),productId);
             List<DeviceInstanceEntity> deviceInstanceEntities = deviceInstanceService.selectDevDeviceByProductId(productId);
             if(CollectionUtil.isEmpty(deviceInstanceEntities)){
                 //查询土壤和空气模块
                 List<DeviceInstanceEntity> deviceInstanceEntitiesList = deviceInstanceService.selectAllDevDeviceMetadata();
                 if(CollectionUtil.isNotEmpty(deviceInstanceEntitiesList)){
+                    String finalProductName = productName;
+                    String finalSamplingFrequency = samplingFrequency;
                     deviceInstanceEntitiesList.stream().forEach(deviceInstanceEntity -> {
                         String currentDate = new Date().getTime() + "";
                         deviceInstanceEntity.setId(currentDate);
                         deviceInstanceEntity.setProductId(productId);
+                        deviceInstanceEntity.setProductName(finalProductName);
+                        deviceInstanceEntity.setState("online");
                         //创建设备
                         log.info("insertDeviceInstance:{}", JSONObject.toJSONString(deviceInstanceEntity));
                         deviceInstanceService.insertDeviceInstance(deviceInstanceEntity);
@@ -183,7 +196,11 @@ public class TcpController {
                             deviceInstanceEntity.setModelId(productId);
                             deviceInstanceEntity.setId(currentDate);
                             deviceInstanceEntity.setIsPrefix("1");
-                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            deviceInstanceEntity.setCreateTime(DateUtil.now());
+                            if(StringUtils.isNotBlank(finalSamplingFrequency)){
+                                String cron = updateFirstField(finalSamplingFrequency, "5");
+                                deviceInstanceEntity.setSamplingFrequency(cron);
+                            }
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
                             //创建土壤含水率      温度   电导率   ph模版
@@ -198,7 +215,11 @@ public class TcpController {
                             deviceInstanceEntity.setModelId(productId);
                             deviceInstanceEntity.setId(new Date().getTime() + "");
                             deviceInstanceEntity.setIsPrefix("1");
-                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            deviceInstanceEntity.setCreateTime(DateUtil.now());
+                            if(StringUtils.isNotBlank(finalSamplingFrequency)){
+                                String cron = updateFirstField(finalSamplingFrequency, "10");
+                                deviceInstanceEntity.setSamplingFrequency(cron);
+                            }
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
                         }else if("01".equals(deviceInstanceEntity.getDeviceAddress())){
@@ -210,7 +231,10 @@ public class TcpController {
                             deviceInstanceEntity.setId(currentDate);
                             deviceInstanceEntity.setIsPrefix("1");
                             deviceInstanceEntity.setTitle(deviceInstanceEntity.getName());
-                            deviceInstanceEntity.setCreateTime(new Date().toString());
+                            deviceInstanceEntity.setCreateTime(DateUtil.now());
+                            if(StringUtils.isNotBlank(finalSamplingFrequency)){
+                                deviceInstanceEntity.setSamplingFrequency(finalSamplingFrequency);
+                            }
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
                         }
@@ -220,6 +244,23 @@ public class TcpController {
         }catch (Exception  e){
             e.printStackTrace();
         }
+    }
+
+    private static String updateFirstField(String cronExpression,String num) {
+        // 使用空格分割 Cron 表达式
+        String[] fields = cronExpression.split(" ");
+
+        // 检查首位是否为 "0"
+        if (fields[0].trim().equals("0")) {
+            // 如果是0，改为5
+            fields[0] = num;
+        }
+        // 重新将字段合并为 Cron 表达式
+        String updatedCronExpression = String.join(" ", fields);
+        // 输出更新后的 Cron 表达式
+        System.out.println("更新后的 Cron 表达式: " + updatedCronExpression);
+
+        return updatedCronExpression;
     }
 
     public static void main(String[] args) {
