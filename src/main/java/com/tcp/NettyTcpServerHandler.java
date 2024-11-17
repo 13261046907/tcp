@@ -491,7 +491,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deriveMetadataValueVos.add(deriveMetadataValueVo);
                         deviceProperty.setDeviceId(deviceId);
                         deviceProperty.setValue(hexList.get(i));
-                        deviceProperty.setProperty(propertiesList.get(i).getId());
+                        deviceProperty.setProperty(propertiesList.get(i).getName());
                         deviceInstanceService.insertDeviceProperty(deviceProperty);
                     }
                     String deriveMetadataValue = JSONArray.toJSONString(deriveMetadataValueVos);
