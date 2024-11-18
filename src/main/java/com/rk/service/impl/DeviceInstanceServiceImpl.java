@@ -2,6 +2,7 @@ package com.rk.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.model.DeviceInstanceEntity;
+import com.model.ProductHistory;
 import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
 import com.rk.domain.DeviceProperty;
@@ -10,7 +11,6 @@ import com.rk.service.DeviceInstanceService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Date;
 import java.util.List;
 
 @Service("deviceInstanceService")
@@ -114,5 +114,20 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     @Override
     public void insertDeviceTcpTemplate(DeviceInstanceEntity deviceInstanceEntity){
         devDeviceInstanceMapper.insertDeviceTcpTemplate(deviceInstanceEntity);
+    }
+
+    @Override
+    public void insertProductHistory(ProductHistory productHistory){
+        devDeviceInstanceMapper.insertProductHistory(productHistory);
+    }
+
+    @Override
+    public void updateProductHistoryById(ProductHistory productHistory) {
+        devDeviceInstanceMapper.updateProductHistoryById(productHistory);
+    }
+
+    @Override
+    public ProductHistory selectHistoryByProductId(String productId, String acquisitionTime) {
+        return devDeviceInstanceMapper.selectHistoryByProductId(productId,acquisitionTime);
     }
 }

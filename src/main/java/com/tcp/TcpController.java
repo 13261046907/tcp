@@ -67,9 +67,9 @@ public class TcpController {
             method = {RequestMethod.GET}
     )
     @ResponseBody
-    public R hexBuild(String deviceId ,String convertedHexString) {
+    public R hexBuild(String productId,String deviceId ,String convertedHexString) {
         try {
-            serverHandler.hexBuild(deviceId,convertedHexString);
+            serverHandler.hexBuild(deviceId,convertedHexString,productId);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -81,7 +81,7 @@ public class TcpController {
             method = {RequestMethod.GET}
     )
     @ResponseBody
-    public R buildAcceptMsg(String channelId,String hex) {
+    public R buildAcceptMsg(String channelId,String hex,String productId) {
         try {
             log.info("加载客户端报文......");
             log.info("【" + channelId + "】" + " :" + hex);
@@ -128,7 +128,7 @@ public class TcpController {
                         deviceAddress = hex.substring(0, 2);
                         String deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId,deviceAddress);
                         System.out.println("perStr:"+modelId+";deviceAddress:"+deviceAddress+";deviceId::"+deviceId+";result="+hex);
-                        hexBuild(deviceId,hex);
+                        hexBuild(productId,deviceId,hex);
                         /*String result = hex.substring(preModelLength);
                         int endCRC = preModelLength + 16;
                         String sendHex = hex.substring(preModelLength, endCRC);

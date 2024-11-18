@@ -9,6 +9,7 @@ import com.config.RedisUtil;
 import com.enums.DeviceStateEnum;
 import com.enums.PropertyUnitEnum;
 import com.model.DeviceInstanceEntity;
+import com.model.ProductHistory;
 import com.rk.domain.*;
 import com.rk.service.DeviceInstanceService;
 import com.rk.service.DeviceTcpInstanceService;
@@ -27,9 +28,12 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -183,7 +187,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deviceAddress = hex.substring(0, 2);
                         String deviceId = deviceInstanceService.selectDeviceIdByAddress(modelId, deviceAddress);
                         System.out.println("perStr:" + modelId + ";deviceAddress:" + deviceAddress + ";deviceId::" + deviceId + ";result=" + hex);
-                        hexBuild(deviceId, hex);
+                        hexBuild(deviceId, hex, modelId);
                     }
                 }
             }catch (Exception e) {
@@ -333,7 +337,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         //cause.printStackTrace();
     }
 
-    public void hexBuild(String deviceId,String convertedHexString){
+    public void hexBuild(String deviceId,String convertedHexString,String productId){
         Integer deviceType = 1;
         Integer startFunction = 4;
         log.info("sendHex:{}",convertedHexString);
@@ -368,7 +372,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
         if(StringUtils.isNotBlank(deviceId)){
             log.info("exceptionCaughtDeviceId:{}",deviceId);
             deviceInstanceService.updateDeviceStateByDeviceId(DeviceStateEnum.online.getValue(),deviceId);
-            String productId = deviceInstanceService.selectProductIdByDeviceId(deviceId);
+            productId = deviceInstanceService.selectProductIdByDeviceId(deviceId);
             deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.online.getName(),productId);
         }
         if (1 == deviceType) {
@@ -426,7 +430,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 log.info("hexList:{}", JSONObject.toJSONString(hexList));
                 if (!CollectionUtils.isEmpty(hexList) && !CollectionUtils.isEmpty(propertiesList)) {
                     List<DeriveMetadataValueVo> deriveMetadataValueVos = new ArrayList<>();
-                    List<DeviceProperty> devicePropertyList = new ArrayList<>();
+                    List<DeviceProperty> DevicePropertys = new ArrayList<>();
                     for (int i = 0; i < hexList.size(); i++) { // Adjust t
                         //保存属性表
                         DeviceProperty deviceProperty = new DeviceProperty();
@@ -493,6 +497,48 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deviceProperty.setValue(hexList.get(i));
                         deviceProperty.setProperty(propertiesList.get(i).getName());
                         deviceInstanceService.insertDeviceProperty(deviceProperty);
+                        deviceProperty.setId(null);
+                        DevicePropertys.add(deviceProperty);
+                    }
+                    if(CollectionUtil.isNotEmpty(DevicePropertys)){
+                        //获取当前时间到分
+                        LocalDateTime now = LocalDateTime.now();
+                        // 定义格式
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                        // 格式化当前日期时间
+                        String formattedDateTime = now.format(formatter);
+                        String deriveMetadataValue = JSONArray.toJSONString(DevicePropertys);
+                        //根据当前productId，查询当前时间设备历史
+                        ProductHistory productHistory = deviceInstanceService.selectHistoryByProductId(productId, formattedDateTime);
+                        if(Objects.isNull(productHistory)){
+                            productHistory = new ProductHistory();
+                            productHistory.setProductId(productId);
+                            productHistory.setAcquisitionTime(DateUtil.now());
+                            productHistory.setData(deriveMetadataValue);
+                            productHistory.setSize(DevicePropertys.size());
+                            deviceInstanceService.insertProductHistory(productHistory);
+                        }else {
+                            String data = productHistory.getData();
+                            if(StringUtils.isNotBlank(data)){
+                                List<DeviceProperty> devicePropertyLists = JSONArray.parseArray(data, DeviceProperty.class);
+                                devicePropertyLists.addAll(DevicePropertys);
+                                // 使用 Map 去重并保存最新的数据
+                                LinkedHashMap<String, DeviceProperty> uniqueDataMap = new LinkedHashMap<>();
+                                for (DeviceProperty property : devicePropertyLists) {
+                                    String key = property.getDeviceId() + "-" + property.getProperty(); // 组合键
+                                    // 只保留最新的数据
+                                    if (!uniqueDataMap.containsKey(key) || (Objects.isNull(uniqueDataMap.get(key)) && uniqueDataMap.get(key).getTimestamp().before(property.getTimestamp()))) {
+                                        uniqueDataMap.put(key, property);
+                                    }
+                                }
+                                // 获取合并后的结果
+                                List<DeviceProperty> uniqueDeviceDataList = new ArrayList<>(uniqueDataMap.values());
+                                productHistory.setData(JSONArray.toJSONString(uniqueDeviceDataList));
+                                productHistory.setSize(devicePropertyLists.size());
+                            }
+                            //更新
+                            deviceInstanceService.updateProductHistoryById(productHistory);
+                        }
                     }
                     String deriveMetadataValue = JSONArray.toJSONString(deriveMetadataValueVos);
                     log.info(JSONObject.toJSONString(deriveMetadataValue));

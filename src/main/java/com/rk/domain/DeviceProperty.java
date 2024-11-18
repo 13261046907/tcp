@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 @TableName("dev_device_property")
 @Data
@@ -25,5 +26,5 @@ public class DeviceProperty implements Serializable {
     private String unit;
 
     @TableField("`timestamp`")
-    private String timestamp;
+    private Date timestamp;
 }

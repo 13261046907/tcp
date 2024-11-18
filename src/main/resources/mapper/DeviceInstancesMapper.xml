@@ -97,4 +97,14 @@
         insert into dev_device_instance_tcp_template(id,device_id,device_type, register_address, function_code,device_address,data_length,instruction_crc,is_prefix,title,model_id,sampling_frequency,create_time)
         values (#{id}, #{deviceId}, #{deviceType},#{registerAddress}, #{functionCode}, #{deviceAddress}, #{dataLength}, #{instructionCrc}, #{isPrefix},#{title},#{modelId},#{samplingFrequency},#{createTime})
     </insert>
+    <select id="selectHistoryByProductId" resultType="com.model.ProductHistory">
+        select * FROM dev_product_history WHERE product_id = #{productId} and DATE_FORMAT(acquisition_time, '%Y-%m-%d %H:%i') = #{acquisitionTime} limit 1
+    </select>
+    <insert id="insertProductHistory" keyProperty="id" useGeneratedKeys="true">
+        insert into dev_product_history(product_id,acquisition_time,`data`, size)
+        values (#{productId}, #{acquisitionTime}, #{data},#{size})
+    </insert>
+    <update id="updateProductHistoryById">
+        update dev_product_history set `data` = #{data},size = #{size} where id=#{id}
+    </update>
 </mapper>

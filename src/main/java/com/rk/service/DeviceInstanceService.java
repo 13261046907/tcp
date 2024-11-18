@@ -2,11 +2,11 @@ package com.rk.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.model.DeviceInstanceEntity;
+import com.model.ProductHistory;
 import com.rk.domain.DeviceInstance;
 import com.rk.domain.DeviceModel;
 import com.rk.domain.DeviceProperty;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -58,4 +58,10 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
     void insertDeviceInstance(DeviceInstanceEntity deviceInstanceEntity);
 
     void insertDeviceTcpTemplate(DeviceInstanceEntity deviceInstanceEntity);
+
+    void insertProductHistory(ProductHistory productHistory);
+
+    void updateProductHistoryById(ProductHistory productHistory);
+
+    ProductHistory selectHistoryByProductId(String productId, String acquisitionTime);
 }
