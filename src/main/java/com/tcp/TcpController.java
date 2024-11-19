@@ -181,7 +181,21 @@ public class TcpController {
                         //创建设备
                         log.info("insertDeviceInstance:{}", JSONObject.toJSONString(deviceInstanceEntity));
                         deviceInstanceService.insertDeviceInstance(deviceInstanceEntity);
-                        if("03".equals(deviceInstanceEntity.getDeviceAddress())){
+                        //创建模版
+                        String deviceId = deviceInstanceEntity.getId();
+                        deviceInstanceEntity.setDeviceId(deviceId);
+                        deviceInstanceEntity.setDeviceType("1");
+                        deviceInstanceEntity.setModelId(productId);
+                        deviceInstanceEntity.setId(currentDate);
+                        deviceInstanceEntity.setIsPrefix("1");
+                        deviceInstanceEntity.setTitle(deviceInstanceEntity.getName());
+                        deviceInstanceEntity.setCreateTime(DateUtil.now());
+                        if(StringUtils.isNotBlank(finalSamplingFrequency)){
+                            deviceInstanceEntity.setSamplingFrequency(finalSamplingFrequency);
+                        }
+                        log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                        deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                        /*if("03".equals(deviceInstanceEntity.getDeviceAddress())){
                             //土壤七合一两个指令
                             //创建氮磷钾模版
                             String deviceId = deviceInstanceEntity.getId();
@@ -237,7 +251,7 @@ public class TcpController {
                             }
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
-                        }
+                        }*/
                     });
                 }
             }

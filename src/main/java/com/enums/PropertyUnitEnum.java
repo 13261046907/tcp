@@ -8,17 +8,17 @@ import java.util.Optional;
 
 @AllArgsConstructor
 public enum PropertyUnitEnum {
-    N("氮", "mg/kg"),
-    L("磷", "mg/kg"),
-    K("钾", "mg/kg"),
+    N("N", "mg/kg"),
+    L("P2O5", "mg/kg"),
+    K("K2O", "mg/kg"),
     TEMPERATURE("温度", "°C"),
     HUMIDITY("湿度", "RH%"),
     TEMPERATURE_TU("温度（土壤）", "°C"),
     HUMIDITY_TU("湿度（土壤）", "RH%"),
-    EC("EC", "mS/cm"),
+    EC("EC", "ms/cm"),
     PH("PH", ""),
-    CO2("co2", "ppm"),
-    LIGHT("光照", "Lux,lx"),
+    CO2("Co₂", "ppm"),
+    LIGHT("光照", "Lux"),
     WIND("风速", "m/s"),
     EVAPORATION("蒸发量", "mm"),
     RAIN("降雨量", "mm"),

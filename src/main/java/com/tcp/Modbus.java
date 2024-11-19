@@ -102,7 +102,7 @@ public class Modbus {
 //        String hex = "7B22696D6569223A22383633313231303738303433303439222C226963636964223A223839383630383432303332343830313539343430222C2266766572223A225945445F445455325F312E312E3130222C22637371223A32377D";
 //        DeviceModel deviceModel = buildModel(hex);
 //        System.out.println(deviceModel);
-        String hex = "3131372E363733373637305F3033392E38393832373732";
+        String hex = "010312016500B700000000000001900000000000877EE0";
         // 去除干扰部分（这里假设干扰部分只是占位，实际需要根据真实情况处理）
         hex = hex.replaceAll("\\*+", "");
         StringBuilder output = new StringBuilder();

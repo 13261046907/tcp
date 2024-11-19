@@ -8,11 +8,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.config.RedisUtil;
 import com.enums.DeviceStateEnum;
 import com.enums.PropertyUnitEnum;
+import com.enums.TaskEnum;
 import com.model.DeviceInstanceEntity;
 import com.model.ProductHistory;
 import com.rk.domain.*;
 import com.rk.service.DeviceInstanceService;
 import com.rk.service.DeviceTcpInstanceService;
+import com.utils.StringUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelId;
@@ -33,7 +35,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -422,7 +423,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     startFunction = propertiesList.size();
                 }
                 List<String> hexList = new ArrayList<>();
-                if(metadata.contains("co2")){
+                if(metadata.contains("Co₂")){
                     hexList = HexUtils.getHexCo2List(convertedHexString, metricsMap);
                 }else {
                     hexList = HexUtils.getHexList(convertedHexString, startFunction,metricsMap);
@@ -434,30 +435,47 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     for (int i = 0; i < hexList.size(); i++) { // Adjust t
                         //保存属性表
                         DeviceProperty deviceProperty = new DeviceProperty();
+                        deviceProperty.setValue(hexList.get(i));
                         ProductProperties productProperties = propertiesList.get(i);
                         DeriveMetadataValueVo deriveMetadataValueVo = new DeriveMetadataValueVo();
                         deriveMetadataValueVo.setType(productProperties.getId());
                         deriveMetadataValueVo.setName(productProperties.getName());
                         deriveMetadataValueVo.setValue(hexList.get(i));
                         if(PropertyUnitEnum.N.getName().equals(deriveMetadataValueVo.getName())){
-                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.N.getValue());
+                            double value = Double.parseDouble(hexList.get(i));
+                            // 取整，保留整数部分
+                            int integerValue = (int) value;
+                            deriveMetadataValueVo.setValue(integerValue+PropertyUnitEnum.N.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.N.getValue());
+                            deviceProperty.setValue(integerValue+"");
                         }
                         if(PropertyUnitEnum.L.getName().equals(deriveMetadataValueVo.getName())){
-                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.L.getValue());
+                            double value = Double.parseDouble(hexList.get(i));
+                            // 取整，保留整数部分
+                            int integerValue = (int) value;
+                            deriveMetadataValueVo.setValue(integerValue+PropertyUnitEnum.L.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.L.getValue());
+                            deviceProperty.setValue(integerValue+"");
                         }
                         if(PropertyUnitEnum.K.getName().equals(deriveMetadataValueVo.getName())){
-                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.K.getValue());
+                            double value = Double.parseDouble(hexList.get(i));
+                            // 取整，保留整数部分
+                            int integerValue = (int) value;
+                            deriveMetadataValueVo.setValue(integerValue+PropertyUnitEnum.K.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.K.getValue());
+                            deviceProperty.setValue(integerValue+"");
                         }
                         if(PropertyUnitEnum.TEMPERATURE.getName().equals(deriveMetadataValueVo.getName()) || PropertyUnitEnum.TEMPERATURE_TU.getName().equals(deriveMetadataValueVo.getName())){
-                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.TEMPERATURE.getValue());
+                            String value = StringUtil.StringDecimalFormat(hexList.get(i));
+                            deriveMetadataValueVo.setValue(value+PropertyUnitEnum.TEMPERATURE.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.TEMPERATURE.getValue());
+                            deviceProperty.setValue(value);
                         }
                         if(PropertyUnitEnum.HUMIDITY.getName().equals(deriveMetadataValueVo.getName()) || PropertyUnitEnum.HUMIDITY_TU.getName().equals(deriveMetadataValueVo.getName())){
-                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.HUMIDITY.getValue());
+                            String value = StringUtil.StringDecimalFormat(hexList.get(i));
+                            deriveMetadataValueVo.setValue(value+PropertyUnitEnum.HUMIDITY.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.HUMIDITY.getValue());
+                            deviceProperty.setValue(value);
                         }
                         if(PropertyUnitEnum.EC.getName().equals(deriveMetadataValueVo.getName())){
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.EC.getValue());
@@ -494,7 +512,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         deriveMetadataValueVo.setUpdateTime(new Date());
                         deriveMetadataValueVos.add(deriveMetadataValueVo);
                         deviceProperty.setDeviceId(deviceId);
-                        deviceProperty.setValue(hexList.get(i));
                         deviceProperty.setProperty(propertiesList.get(i).getName());
                         deviceInstanceService.insertDeviceProperty(deviceProperty);
                         deviceProperty.setId(null);
@@ -639,12 +656,20 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
     public void buildDeviceInstance(String productId) {
         try {
             //查询产品id,更新产品在线
-            DeviceInstanceEntity deviceInstanceEntityQuyery = deviceInstanceService.selectDevProductInfoById(productId);
+            DeviceInstanceEntity deviceInstanceEntityQuery = deviceInstanceService.selectDevProductInfoById(productId);
             String productName = "";
             String samplingFrequency = "";
-            if(Objects.isNull(deviceInstanceEntityQuyery)){
-                productName = deviceInstanceEntityQuyery.getProductName();
-                samplingFrequency = deviceInstanceEntityQuyery.getSamplingFrequency();
+            System.out.println(deviceInstanceEntityQuery.getProductName());
+            if(!Objects.isNull(deviceInstanceEntityQuery)){
+                productName = deviceInstanceEntityQuery.getProductName();
+                samplingFrequency = deviceInstanceEntityQuery.getSamplingFrequency();
+                if(StringUtils.isNotBlank(samplingFrequency)){
+                    TaskEnum taskKey = TaskEnum.getTaskKey(samplingFrequency);
+                    if(!Objects.isNull(taskKey)){
+                        samplingFrequency = taskKey.getKey();
+                    }
+                }
+                System.out.println("prodName:"+productName+"samplingFrequency:"+samplingFrequency);
             }
             deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.online.getName(),productId);
             List<DeviceInstanceEntity> deviceInstanceEntities = deviceInstanceService.selectDevDeviceByProductId(productId);
@@ -654,15 +679,39 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                 if(CollectionUtil.isNotEmpty(deviceInstanceEntitiesList)){
                     String finalProductName = productName;
                     String finalSamplingFrequency = samplingFrequency;
-                    deviceInstanceEntitiesList.stream().forEach(deviceInstanceEntity -> {
+                    for (int i = 0; i < deviceInstanceEntitiesList.size(); i++) {
+                        DeviceInstanceEntity deviceInstanceEntity = deviceInstanceEntitiesList.get(i);
                         String currentDate = new Date().getTime() + "";
                         deviceInstanceEntity.setId(currentDate);
                         deviceInstanceEntity.setProductId(productId);
                         deviceInstanceEntity.setProductName(finalProductName);
                         deviceInstanceEntity.setState("online");
                         //创建设备
-                        log.info("insertDeviceInstance:{}", JSONObject.toJSONString(deviceInstanceEntity));
+                        log.info("deviceInstanceEntity:{}",JSONObject.toJSONString(deviceInstanceEntity));
                         deviceInstanceService.insertDeviceInstance(deviceInstanceEntity);
+                        //创建模版
+                        String deviceId = deviceInstanceEntity.getId();
+                        deviceInstanceEntity.setDeviceId(deviceId);
+                        deviceInstanceEntity.setDeviceType("1");
+                        deviceInstanceEntity.setModelId(productId);
+                        deviceInstanceEntity.setId(currentDate);
+                        deviceInstanceEntity.setIsPrefix("1");
+                        deviceInstanceEntity.setTitle(deviceInstanceEntity.getName());
+                        deviceInstanceEntity.setCreateTime(DateUtil.now());
+                        if(StringUtils.isNotBlank(finalSamplingFrequency)){
+                            if(i != 0){
+                                String ss = String.valueOf(i + 2);
+                                String cron = updateFirstField(finalSamplingFrequency, ss);
+                                deviceInstanceEntity.setSamplingFrequency(cron);
+                            }else {
+                                deviceInstanceEntity.setSamplingFrequency(finalSamplingFrequency);
+                            }
+                        }
+                        log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
+                        deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
+                    }
+
+                   /* deviceInstanceEntitiesList.stream().forEach(deviceInstanceEntity -> {
                         if("03".equals(deviceInstanceEntity.getDeviceAddress())){
                             //土壤七合一两个指令
                             //创建氮磷钾模版
@@ -720,7 +769,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             log.info("insertDeviceTcpTemplate:{}",JSONObject.toJSONString(deviceInstanceEntity));
                             deviceInstanceService.insertDeviceTcpTemplate(deviceInstanceEntity);
                         }
-                    });
+                    });*/
                 }
             }
         }catch (Exception  e){
