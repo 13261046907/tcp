@@ -580,6 +580,12 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         }
                         // 获取最终结果列表
                         List<DeriveMetadataValueVo> resultList = new ArrayList<>(latestDataMap.values());
+                        // 使用 Arrays.asList 创建一个列表
+                        List<String> order = Arrays.asList(
+                                "温度", "湿度", "光照", "Co₂", "温度（土壤）",
+                                "湿度（土壤）", "N", "P2O5", "K2O", "PH", "EC"
+                        );
+                        resultList.sort(Comparator.comparingInt(p -> order.indexOf(p.getName())));
                         //update 数据库
                         deviceInstanceService.updateDeriveMetadataValueById(JSONObject.toJSONString(resultList),deviceId);
                     }
@@ -659,7 +665,6 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             DeviceInstanceEntity deviceInstanceEntityQuery = deviceInstanceService.selectDevProductInfoById(productId);
             String productName = "";
             String samplingFrequency = "";
-            System.out.println(deviceInstanceEntityQuery.getProductName());
             if(!Objects.isNull(deviceInstanceEntityQuery)){
                 productName = deviceInstanceEntityQuery.getProductName();
                 samplingFrequency = deviceInstanceEntityQuery.getSamplingFrequency();
@@ -669,11 +674,13 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         samplingFrequency = taskKey.getKey();
                     }
                 }
-                System.out.println("prodName:"+productName+"samplingFrequency:"+samplingFrequency);
+                log.info("prodName:{}，samplingFrequency:{}",productName,samplingFrequency);
             }
             deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.online.getName(),productId);
             List<DeviceInstanceEntity> deviceInstanceEntities = deviceInstanceService.selectDevDeviceByProductId(productId);
+            log.info("productId:{},deviceInstanceEntities:{}",productId,JSONArray.toJSONString(deviceInstanceEntities));
             if(CollectionUtil.isEmpty(deviceInstanceEntities)){
+                log.info("createDevice:{}",productId);
                 //查询土壤和空气模块
                 List<DeviceInstanceEntity> deviceInstanceEntitiesList = deviceInstanceService.selectAllDevDeviceMetadata();
                 if(CollectionUtil.isNotEmpty(deviceInstanceEntitiesList)){
