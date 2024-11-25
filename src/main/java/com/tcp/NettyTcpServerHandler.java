@@ -668,6 +668,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
             if(!Objects.isNull(deviceInstanceEntityQuery)){
                 productName = deviceInstanceEntityQuery.getProductName();
                 samplingFrequency = deviceInstanceEntityQuery.getSamplingFrequency();
+                log.info("samplingFrequency:{}");
                 if(StringUtils.isNotBlank(samplingFrequency)){
                     TaskEnum taskKey = TaskEnum.getTaskKey(samplingFrequency);
                     if(!Objects.isNull(taskKey)){

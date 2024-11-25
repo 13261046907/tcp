@@ -76,7 +76,7 @@ public class Modbus {
         return deviceModel;
     }
 
-    public static void main1(String[] args) {
+    public static void main(String[] args) {
         int slaveId = 1; // 从站ID
         int functionCode = 3; // 功能码：读取保持寄存器
         int registerAddress = 4; // 寄存器地址（40001映射到地址为0x0000）
@@ -97,12 +97,12 @@ public class Modbus {
         return sb.toString().trim(); // 去掉最后的空格
     }
 
-    public static void main(String[] args) {
+    public static void main1(String[] args) {
 //        {"imei":"863121078043049","iccid":"89860842032480159440","fver":"YED_DTU2_1.1.10","csq":27}
 //        String hex = "7B22696D6569223A22383633313231303738303433303439222C226963636964223A223839383630383432303332343830313539343430222C2266766572223A225945445F445455325F312E312E3130222C22637371223A32377D";
 //        DeviceModel deviceModel = buildModel(hex);
 //        System.out.println(deviceModel);
-        String hex = "010312016500B700000000000001900000000000877EE0";
+        String hex = "010312017300BC000000000000019000000000005FDBD9";
         // 去除干扰部分（这里假设干扰部分只是占位，实际需要根据真实情况处理）
         hex = hex.replaceAll("\\*+", "");
         StringBuilder output = new StringBuilder();

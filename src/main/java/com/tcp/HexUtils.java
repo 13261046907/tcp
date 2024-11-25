@@ -74,9 +74,9 @@ public class HexUtils {
 
     public static void main(String[] args) {
 
-        List<String> hexList = getHexList("03030803E800A9020500353BC2", 4, new HashMap<>());
+        List<String> hexList = getHexList("010312016500B4000000000000019000000000007C7C62", 4, new HashMap<>());
         System.out.println(hexList);
-        String aa = "010312015E00B700000000000002240000000001B0E985";
+        String aa = "010312016500B4000000000000019000000000007C7C62";
 
         // 按4个字节分割字符串
         String[] dataChunks = splitIntoChunks(aa, 4);
