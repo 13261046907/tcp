@@ -68,6 +68,7 @@ public class StateTaskService {
                             }
                         } else {
                             log.info("4G在线:{}",imei);
+                            deviceInstanceService.updateProductStateByProductId(DeviceStateEnum.online.getName(),imei);
                         }
 //                        serverHandler.syncChannelWrite(deviceModel.getChannel(), deviceModelVo.getInstructionCrc());
                     } catch (Exception e) {
