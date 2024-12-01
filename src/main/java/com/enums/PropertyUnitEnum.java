@@ -16,10 +16,10 @@ public enum PropertyUnitEnum {
     EC("EC", "mS/cm"),
     PH("PH", ""),
     CO2("co2", "ppm"),
-    LIGHT("光照", "Lux,lx"),
-    WIND("风速", "m/s"),
-    EVAPORATION("蒸发量", "mm"),
-    RAIN("降雨量", "mm"),
+    LIGHT("光照", "Lux"),
+    WIND("风速", "M/S"),
+    EVAPORATION("蒸发量", "mm/h"),
+    RAIN("降雨量", "mm/h"),
     PA("气压", "Pa"),
     PAR("光合辐射", "PAR");
 
