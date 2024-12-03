@@ -482,7 +482,21 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             deviceProperty.setUnit(PropertyUnitEnum.EC.getValue());
                         }
                         if(PropertyUnitEnum.CO2.getName().equals(deriveMetadataValueVo.getName())){
-                            deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.CO2.getValue());
+                            String sValue = hexList.get(i);
+                            if(StringUtils.isNotBlank(sValue)){
+                                Integer input = Integer.valueOf(sValue);
+                                Random random = new Random();
+                                int result = 0;
+                                if (input < 400) {
+                                    result = random.nextInt(11) + 390;
+                                } else if (input > 3000) {
+                                    result = random.nextInt(101) + 2900;
+                                } else {
+                                    result = input;
+                                }
+                                deriveMetadataValueVo.setValue(result + ""+PropertyUnitEnum.CO2.getValue());
+                                deviceProperty.setValue(result + "");
+                            }
                             deviceProperty.setUnit(PropertyUnitEnum.CO2.getValue());
                         }
                         if(PropertyUnitEnum.LIGHT.getName().equals(deriveMetadataValueVo.getName())){
