@@ -63,5 +63,5 @@ public interface DeviceInstanceService extends IService<DeviceInstance> {
 
     void updateProductHistoryById(ProductHistory productHistory);
 
-    ProductHistory selectHistoryByProductId(String productId, String acquisitionTime);
+    ProductHistory selectHistoryByProductId(String productId, String startTime,String endTime);
 }

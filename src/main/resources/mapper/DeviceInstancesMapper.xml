@@ -98,7 +98,8 @@
         values (#{id}, #{deviceId}, #{deviceType},#{registerAddress}, #{functionCode}, #{deviceAddress}, #{dataLength}, #{instructionCrc}, #{isPrefix},#{title},#{modelId},#{samplingFrequency},#{createTime})
     </insert>
     <select id="selectHistoryByProductId" resultType="com.model.ProductHistory">
-        select * FROM dev_product_history WHERE product_id = #{productId} and DATE_FORMAT(acquisition_time, '%Y-%m-%d %H:%i') = #{acquisitionTime} limit 1
+        select * FROM dev_product_history WHERE product_id = #{productId} and acquisition_time &gt; #{startTime} and acquisition_time &lt; #{endTime} ORDER BY
+            acquisition_time DESC  limit 1
     </select>
     <insert id="insertProductHistory" keyProperty="id" useGeneratedKeys="true">
         insert into dev_product_history(product_id,acquisition_time,`data`, size)

@@ -534,13 +534,15 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                     if(CollectionUtil.isNotEmpty(DevicePropertys)){
                         //获取当前时间到分
                         LocalDateTime now = LocalDateTime.now();
+                        LocalDateTime threeMinutesAgo = now.minusMinutes(3); // Subtract 3 minutes
                         // 定义格式
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         // 格式化当前日期时间
-                        String formattedDateTime = now.format(formatter);
+                        String endTime = now.format(formatter);
+                        String startTime = threeMinutesAgo.format(formatter);
                         String deriveMetadataValue = JSONArray.toJSONString(DevicePropertys);
                         //根据当前productId，查询当前时间设备历史
-                        ProductHistory productHistory = deviceInstanceService.selectHistoryByProductId(productId, formattedDateTime);
+                        ProductHistory productHistory = deviceInstanceService.selectHistoryByProductId(productId,startTime,endTime);
                         if(Objects.isNull(productHistory)){
                             productHistory = new ProductHistory();
                             productHistory.setProductId(productId);

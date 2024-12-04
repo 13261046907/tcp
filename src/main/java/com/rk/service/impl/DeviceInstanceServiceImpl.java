@@ -127,7 +127,7 @@ public class DeviceInstanceServiceImpl extends ServiceImpl<DevDeviceInstanceMapp
     }
 
     @Override
-    public ProductHistory selectHistoryByProductId(String productId, String acquisitionTime) {
-        return devDeviceInstanceMapper.selectHistoryByProductId(productId,acquisitionTime);
+    public ProductHistory selectHistoryByProductId(String productId, String startTime,String endTime) {
+        return devDeviceInstanceMapper.selectHistoryByProductId(productId,startTime,endTime);
     }
 }
