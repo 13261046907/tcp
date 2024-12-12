@@ -31,7 +31,7 @@ public class StateTaskService {
     @Autowired
     private NettyTcpServerHandler serverHandler;
 
-    @Scheduled(cron = "0 0/5 * * * ?")
+//    @Scheduled(cron = "0 0/5 * * * ?")
     public void chatGPTTask1(){
         log.info("5分钟任务更新完工数据:{}",new Date());
         List<DeviceModel> deviceModelVos = deviceInstanceService.selectAllTcpTemp();
