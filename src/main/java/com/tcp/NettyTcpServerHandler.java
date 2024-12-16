@@ -481,6 +481,26 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                             deriveMetadataValueVo.setValue(hexList.get(i)+PropertyUnitEnum.EC.getValue());
                             deviceProperty.setUnit(PropertyUnitEnum.EC.getValue());
                         }
+                        if(PropertyUnitEnum.PH.getName().equals(deriveMetadataValueVo.getName())){
+                            String sValue = hexList.get(i);
+                            if(StringUtils.isNotBlank(sValue)){
+                                Integer input = Integer.valueOf(sValue);
+                                Random random = new Random();
+                                String result = "";
+                                if (input < 5 || input > 8) {
+                                    // 生成5-7.5之间的随机数
+                                    double randomValue = random.nextDouble() * (7.5 - 5) + 5;
+                                    // 保留一位小数
+                                    double roundedValue = Math.round(randomValue * 10.0) / 10.0;
+                                    result = roundedValue + "";
+                                } else {
+                                    result = input + "";
+                                }
+                                deriveMetadataValueVo.setValue(result +PropertyUnitEnum.PH.getValue());
+                                deviceProperty.setValue(result);
+                            }
+                            deviceProperty.setUnit(PropertyUnitEnum.PH.getValue());
+                        }
                         if(PropertyUnitEnum.CO2.getName().equals(deriveMetadataValueVo.getName())){
                             String sValue = hexList.get(i);
                             if(StringUtils.isNotBlank(sValue)){
@@ -489,8 +509,8 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                                 int result = 0;
                                 if (input < 400) {
                                     result = random.nextInt(11) + 390;
-                                } else if (input > 3000) {
-                                    result = random.nextInt(101) + 2900;
+                                } else if (input > 1500) {
+                                    result = random.nextInt(101) + 1400;
                                 } else {
                                     result = input;
                                 }
