@@ -484,7 +484,7 @@ public class NettyTcpServerHandler extends ChannelInboundHandlerAdapter {
                         if(PropertyUnitEnum.PH.getName().equals(deriveMetadataValueVo.getName())){
                             String sValue = hexList.get(i);
                             if(StringUtils.isNotBlank(sValue)){
-                                Integer input = Integer.valueOf(sValue);
+                                Double input = Double.valueOf(sValue);
                                 Random random = new Random();
                                 String result = "";
                                 if (input < 5 || input > 8) {
